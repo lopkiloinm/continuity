@@ -23,7 +23,8 @@ class Job:
         self.spent = 0
         self.epoch = 0
         self.agent = None
-        self.expires_at = clock() + 600
+        # Setup and identity verification do not consume worker authority time.
+        self.expires_at = None
         self.rows = []
         self.events = []
         self.capsule = None
@@ -45,7 +46,7 @@ class Job:
             raise Rejected("Expected %s; job is %s." % (state, self.state))
 
     def check_authority(self, agent, epoch):
-        if self.clock() >= self.expires_at:
+        if self.expires_at is None or self.clock() >= self.expires_at:
             raise Rejected("Authority expired; create a new job. Approval cannot extend it.")
         if self.state not in ("primary_working", "successor_working") or agent != self.agent or epoch != self.epoch:
             raise Rejected("Worker authority is inactive or revoked.")
@@ -66,8 +67,7 @@ class Job:
 
     def start(self):
         self.require("ready")
-        if self.clock() >= self.expires_at:
-            raise Rejected("Job expired; create a new job.")
+        self.expires_at = self.clock() + 600
         self.state, self.agent = "primary_working", "primary.local"
         self.commit_batch(self.agent, self.epoch, 0, 17, 60_000)
 

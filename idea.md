@@ -33,7 +33,7 @@ Local state is in memory; the Vercel deployment stores encrypted sessions in Red
 3. Select an approved successor. Passing fixture checks grant only the remaining batch. Resume and download the 30-row CSV.
 4. Reset and repeat with a changed payout. This fixture passes risk screening but requires fresh World verification of the same job owner followed by explicit consent. Cancel: no backup starts, no further spend occurs. Reset to demonstrate approval separately; cancellation cannot be replayed into approval.
 5. Reset and repeat with risk denied or screening unavailable. Both block. Human consent cannot override these outcomes.
-6. The job expires after ten minutes; consent expires after at most two minutes. Neither approval nor retry extends the job deadline.
+6. The job expires ten minutes after the primary worker starts; consent expires after at most two minutes. Neither approval nor retry extends the job deadline.
 
 The tests must also reject stale worker epochs, repeated batch commits, mismatched approval hashes, repeated approvals, and spending above the cap. These are local model guarantees, not claims about distributed execution or external settlement.
 
@@ -41,7 +41,7 @@ The tests must also reject stale worker epochs, repeated batch commits, mismatch
 
 `ready → primary_working → frozen → successor_working → completed`
 
-From `frozen`, a decision can instead enter `awaiting_approval`, `blocked`, or `expired`. Pending consent can grant successor authority, cancel, or expire. Cancelled and blocked jobs are terminal in this prototype; reset starts a separate job.
+From `frozen`, a decision can instead enter `awaiting_approval`, `blocked`, or `expired`. Pending consent can grant successor authority, cancel, or expire. Cancelled and blocked jobs are terminal in this prototype; New job starts a separate job, retaining the current session’s verified owner while clearing handoff verification evidence.
 
 | Object | Required fields / responsibility |
 | --- | --- |

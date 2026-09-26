@@ -33,7 +33,7 @@ Open http://127.0.0.1:8000. Without credentials, the app shows “Not configured
 5. After backend validation, review the intent and select **Approve this handoff**. Only this separate consent consumes the one-time verification evidence and grants the backup worker authority. Resume to demonstrate the protected action.
 6. Reset and repeat, denying on World’s page or cancelling locally. The successor must not start. A wrong owner, expired attempt, failed provider, or invalid token also prevents authority from being granted.
 
-Job authority lasts ten minutes. Handoff approval lasts two minutes. Verification cannot extend either deadline. Reset creates a new job and requires establishing its owner again. Local sessions are in memory. On Vercel, encrypted Redis sessions survive cold starts and expire after one hour of inactivity.
+Job authority lasts ten minutes from starting the primary worker; setup and owner verification do not use this work window. Handoff approval lasts two minutes. Verification cannot extend either deadline. New job creates a fresh job while retaining the verified owner in the current browser session. It clears all pending verification and handoff evidence; changed-payout handoffs still require fresh owner verification. Local sessions are in memory. On Vercel, encrypted Redis sessions survive cold starts and expire after one hour of inactivity.
 
 ## Backend checks and boundaries
 

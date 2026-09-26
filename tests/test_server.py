@@ -104,6 +104,42 @@ class HttpTests(unittest.TestCase):
         _, body = self.request('/api/job')
         self.assertNotEqual(first, json.loads(body)['id'])
 
+    def test_new_job_keeps_owner_but_discards_handoff_authorization(self):
+        self.request('/api/job')
+        session = next(iter(server.sessions.values()))
+        session.owner = ('test-issuer', 'verified-owner')
+        self.request('/api/start', {})
+        self.request('/api/fail', {})
+        self.request('/api/evaluate', {'scenario': 'changed_address'})
+        original_id = session.job.id
+        session.world.evidence = {'binding': session.job.snapshot()['approval_hash'], 'expires_at': 9999999999}
+        status, body = self.request('/api/reset', {})
+        result = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertNotEqual(result['id'], original_id)
+        self.assertTrue(result['world']['owner_connected'])
+        self.assertFalse(result['world']['can_approve'])
+        self.assertIsNone(session.world.evidence)
+        self.assertIsNone(session.world.attempt)
+        self.assertIsNone(result['expires_at'])
+        self.assertEqual(result['spent_micro_usdc'], 0)
+        self.assertEqual(self.request('/api/start', {})[0], 200)
+        self.request('/api/fail', {})
+        self.request('/api/evaluate', {'scenario': 'changed_address'})
+        self.assertEqual(self.request('/api/decide', {'approved': True,
+            'approval_hash': session.job.snapshot()['approval_hash']})[0], 409)
+
+    def test_owner_verification_is_not_bounded_by_old_job_deadline(self):
+        import time
+        provider = Provider()
+        server.world_client = WorldClient(Config('test-client', 'test-secret'), provider)
+        self.request('/api/job')
+        session = next(iter(server.sessions.values()))
+        session.job.expires_at = 1  # A saved pre-fix job that sat on the setup screen.
+        status, _ = self.request('/api/world/start', {'purpose': 'owner'})
+        self.assertEqual(status, 200)
+        self.assertGreater(session.world.attempt['expires_at'], time.time())
+
     def test_full_owner_and_handoff_verification_through_http(self):
         provider = Provider()
         server.world_client = WorldClient(Config('test-client', 'test-secret'), provider)

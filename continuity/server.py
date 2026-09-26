@@ -29,6 +29,13 @@ class Session:
         self.world = WorldFlow(world_client)
         self.touched = time.time()
 
+    def new_job(self):
+        self.world.cancel()
+        self.job = Job()
+        self.world = WorldFlow(world_client)
+        if self.owner is not None:
+            self.job.record('owner_retained', 'New job belongs to the verified owner of this browser session. Handoffs still require fresh verification.')
+
     def snapshot(self):
         data = self.job.snapshot()
         data['world'] = self.world.public()
@@ -54,6 +61,9 @@ class Session:
             raise StorageError('Unsupported saved session version.')
         session = cls()
         session.job.__dict__.update(data['job'])
+        # Migrate already-saved, unstarted jobs without discarding verified owners.
+        if session.job.state == 'ready':
+            session.job.expires_at = None
         session.owner = tuple(data['owner']) if data['owner'] else None
         for key in ('attempt', 'evidence', 'error'):
             setattr(session.world, key, data['world'][key])
@@ -207,10 +217,7 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict):
                 raise ValueError('Expected a JSON object')
             if self.path == '/api/reset':
-                session.world.cancel()
-                session.job = Job()
-                session.owner = None
-                session.world = WorldFlow(world_client)
+                session.new_job()
             elif self.path == '/api/world/start':
                 if self.deployed:
                     ip = self.headers.get('x-vercel-forwarded-for', self.client_address[0])
@@ -220,7 +227,7 @@ class Handler(BaseHTTPRequestHandler):
                     job.require('ready')
                     if session.owner is not None:
                         raise Rejected('This job already has an owner.')
-                    session.world.start('owner', job.id, deadline=job.expires_at)
+                    session.world.start('owner', job.id)
                 elif purpose == 'handoff':
                     job.require('awaiting_approval')
                     if session.owner is None:

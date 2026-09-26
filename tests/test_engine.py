@@ -11,6 +11,26 @@ class HandoffTests(unittest.TestCase):
         self.job.start()
         self.job.fail()
 
+    def test_setup_time_does_not_consume_work_authority(self):
+        self.assertIsNone(self.job.expires_at)
+        self.now += 1800
+        self.job.start()
+        self.assertEqual(self.job.expires_at, self.now + 600)
+        self.assertEqual(len(self.job.rows), 17)
+
+    def test_legacy_ready_deadline_does_not_block_start(self):
+        self.job.expires_at = self.now - 1
+        self.job.start()
+        self.assertEqual(self.job.expires_at, self.now + 600)
+
+    def test_start_cannot_extend_active_authority(self):
+        self.job.start()
+        deadline = self.job.expires_at
+        self.now += 601
+        with self.assertRaises(Rejected):
+            self.job.start()
+        self.assertEqual(self.job.expires_at, deadline)
+
     def test_clean_completion_and_receipt(self):
         self.frozen()
         self.job.evaluate('clean')

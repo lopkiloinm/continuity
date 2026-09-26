@@ -72,6 +72,23 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(restored.world.attempt['owner'], ('issuer', 'subject'))
         self.assertEqual(restored.world.attempt['device_code'], 'private-code')
 
+    def test_old_ready_session_migrates_without_losing_owner(self):
+        session = server.Session()
+        session.owner = ('issuer', 'verified-owner')
+        session.job.expires_at = 1
+        original_id = session.job.id
+        restored = server.Session.restore(json.loads(json.dumps(session.serialize())))
+        self.assertIsNone(restored.job.expires_at)
+        self.assertEqual(restored.owner, session.owner)
+        self.assertEqual(restored.job.id, original_id)
+
+    def test_restore_does_not_extend_started_job(self):
+        session = server.Session()
+        session.job.start()
+        session.job.expires_at = 1
+        restored = server.Session.restore(json.loads(json.dumps(session.serialize())))
+        self.assertEqual(restored.job.expires_at, 1)
+
     def test_parallel_requests_rejected_and_stale_commit_fenced(self):
         old, _ = self.store.acquire('session')
         with self.assertRaises(SessionBusy):

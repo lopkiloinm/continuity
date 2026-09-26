@@ -11,6 +11,13 @@ function render() {
   $('bar').value = job.rows.length;
   $('state').textContent = job.state.replaceAll('_', ' ');
   $('agent').textContent = job.active_agent || 'No active worker';
+  $('job-deadline').textContent = job.state === 'ready'
+    ? 'Your 10-minute work window begins when you start the primary worker.'
+    : job.state === 'completed' ? 'Job completed. Create a new job to run another example.'
+    : job.expires_at && Date.now() >= job.expires_at * 1000
+      ? 'Work window expired. Choose New job below; your connected owner stays signed in.'
+      : job.expires_at ? `Work authority expires at ${new Date(job.expires_at * 1000).toLocaleTimeString()}.` : '';
+  $('reset').textContent = world.owner_connected ? 'New job · keep owner' : 'New job';
   for (const [id, state] of Object.entries({start:'ready', fail:'primary_working', evaluate:'frozen', resume:'successor_working', approve:'awaiting_approval', cancel:'awaiting_approval', verify:'awaiting_approval'})) {
     $(id).disabled = busy || job.state !== state;
   }
