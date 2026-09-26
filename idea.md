@@ -20,11 +20,11 @@ Install `requirements.txt` in `.venv`, configure the registered World sandbox cl
 - A 100,000-unit simulated budget, displayed as 0.10 USDC. The primary batch consumes 60,000 units; the successor batch consumes 40,000. These are chosen demo prices, not market prices or actual USDC transfers.
 - A checkpoint containing 17 completed fixture records, job identity, next record, remaining budget, action scope, expiry, and authority epoch.
 - Four explicit screening fixtures: pass, changed payee with passing screening, deny, and unavailable.
-- A real World sandbox OIDC device-grant integration with backend validation, original-owner matching, fresh verification, and separate action-bound consent. Registration and first live user verification remain pending.
+- A real World sandbox OIDC device-grant integration with backend validation, original-owner matching, fresh verification, and separate action-bound consent. Registration and live device initiation are complete; first completed user verification remains pending.
 - CSV export and a JSON receipt containing a SHA-256 event hash chain.
 - Tests for the local authority, budget, duplicate-work, approval, and expiry boundaries.
 
-All state is in memory. Each browser session controls its own job. World device-grant and token validation code is implemented; no successful end-user live verification is claimed yet. There are no independently authenticated workers, real payments, deployed contracts, ENS/Intercepta/x402 integrations, encrypted capsules, or signed receipts. The hash chain is unsigned and can be recomputed by the server; it is not independently verifiable accountability.
+Local state is in memory; the Vercel deployment stores encrypted sessions in Redis with one-hour idle expiry. Each browser session controls its own job. World device-grant and token validation code is implemented; no successful end-user live verification is claimed yet. There are no independently authenticated workers, real payments, deployed contracts, ENS/Intercepta/x402 integrations, encrypted capsules, or signed receipts. The hash chain is unsigned and can be recomputed by the server; it is not independently verifiable accountability.
 
 ## Demo script and acceptance criteria
 
@@ -89,7 +89,7 @@ The pasted event brief calls for the official development environment, backend v
 
 The official service and public MCP guides were successfully retrieved on 2026-09-26. `continuity/world.py` now implements the documented confidential-client device flow: discovery, device initiation, timed polling, JWKS signature validation, identity and freshness checks. The app first establishes the job owner, then requires a fresh matching identity for a changed-payout handoff. A separate explicit consent action consumes verification evidence bound to the exact intent hash. Device codes, tokens, and subjects stay on the backend.
 
-No client is registered yet and no live end-user verification has completed. Missing configuration blocks execution; there is no fake approval fallback. See [setup, validation details, sources, and debrief](docs/world-id.md). Next evidence: register the client, complete a successful protected handoff, demonstrate denial/cancellation and wrong-owner rejection with the actual service, and record timings without exposing tokens or identities.
+A client is registered, Production credentials are configured, and live device initiation has succeeded. No completed live end-user verification is claimed. Missing configuration blocks execution; there is no fake approval fallback. See [setup, validation details, sources, and debrief](docs/world-id.md). Next evidence: register the client, complete a successful protected handoff, demonstrate denial/cancellation and wrong-owner rejection with the actual service, and record timings without exposing tokens or identities.
 
 ### x402: bounded paid requests
 
@@ -104,7 +104,7 @@ Incrementing a local epoch cannot invalidate an already signed external authoriz
 | Milestone | Concrete deliverable | Exit evidence |
 | --- | --- | --- |
 | 0 — local model (implemented) | State machine, fixture UI, exports, tests | Successful recovery and blocked/cancelled paths; automated invariant tests |
-| 1 — durable execution | SQLite transactions, job/batch uniqueness constraints, authenticated worker requests, checkpoint persistence | Kill/restart at every transition; stale worker and concurrent retry tests |
+| 1 — durable execution (partial) | Encrypted Redis sessions and fenced request leases implemented for Vercel; authenticated workers and durable settlement records remain | Kill/restart at every transition; stale worker and concurrent retry tests |
 | 2 — actual paid batch | Test x402 endpoint, bounded signing service, payment-intent ledger and reconciliation | Settlement evidence; ambiguous response/retry does not double-charge |
 | 3 — resolution and screening | ENSv2 resolver and live Intercepta adapters | Recorded permission test and live pass/block results gate signing |
 | 4 — owner-authorized handoff (code implemented) | World sandbox device flow and explicit intent consent; register client and run live | Automated rejection tests; live success/denial evidence still pending |

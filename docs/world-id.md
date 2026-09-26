@@ -2,6 +2,10 @@
 
 Continuity uses the official **World sandbox OIDC device grant**, implemented in `continuity/world.py`. It is a direct backend integration; installing World’s coding-agent plugin is not required.
 
+## Hosted app
+
+The app and Python backend are deployed at https://continuity-ruddy.vercel.app. Register `https://continuity-ruddy.vercel.app/auth/world/callback` with **Client secret (Basic)**, then save the client ID and secret in Vercel Production environment variables and redeploy. See [deployment details](deployment.md).
+
 ## Register and configure
 
 1. Open https://sandbox.auth.world.org/portal and sign in with Google. This developer login is separate from end-user World verification.
@@ -29,7 +33,7 @@ Open http://127.0.0.1:8000. Without credentials, the app shows “Not configured
 5. After backend validation, review the intent and select **Approve this handoff**. Only this separate consent consumes the one-time verification evidence and grants the backup worker authority. Resume to demonstrate the protected action.
 6. Reset and repeat, denying on World’s page or cancelling locally. The successor must not start. A wrong owner, expired attempt, failed provider, or invalid token also prevents authority from being granted.
 
-Job authority lasts ten minutes. Handoff approval lasts two minutes. Verification cannot extend either deadline. Reset creates a new job and requires establishing its owner again. Browser sessions and pending attempts are in memory and expire after an hour of inactivity; restarting the server discards them.
+Job authority lasts ten minutes. Handoff approval lasts two minutes. Verification cannot extend either deadline. Reset creates a new job and requires establishing its owner again. Local sessions are in memory. On Vercel, encrypted Redis sessions survive cold starts and expire after one hour of inactivity.
 
 ## Backend checks and boundaries
 
@@ -41,7 +45,7 @@ Job authority lasts ten minutes. Handoff approval lasts two minutes. Verificatio
 - Fresh handoff verification must return the original owner’s issuer and subject. The backend binds the result to the job, capsule hash, epoch, successor, payee, amount, action, and deadline through the pending intent hash.
 - A JSON `approved: true` request or a client-supplied `evidence` object is insufficient. The server must already possess validated, unexpired evidence, which is consumed once.
 - Explicit consent is recorded separately from identity verification. Receipts contain an issuer, assurance class, authentication time, intent binding, evidence expiry, and token hash; no raw token, secret, device code, or subject is exported. These receipts remain unsigned local records, not independent proof of verification.
-- Browser sessions use random HttpOnly, SameSite=Strict cookies. State is isolated by session; JSON-only requests and exact loopback Host/Origin checks protect local mutations. This server is loopback-only. Deployment needs HTTPS/Secure cookies, durable sessions and job storage, limits, and a production review.
+- Browser sessions use random HttpOnly, SameSite=Strict cookies. State is isolated by session; JSON-only requests and exact loopback Host/Origin checks protect local mutations. Local mode is loopback-only. Vercel mode uses HTTPS/Secure cookies, configured origins, encrypted Redis persistence, fenced request leases, and a verification-start rate limit. A production payment service still requires a broader review.
 
 The job's records, money, risk checks, and successor discovery are still simulated. World’s **sandbox uses test identities**, according to the supplied event brief; calling the real sandbox service does not establish production proof of humanity.
 
@@ -54,12 +58,12 @@ Inspected on 2026-09-26:
 - Official public MCP: https://sandbox.auth.world.org/mcp — `list_idp_guides`, then `get_idp_guide` for `getting-started`, `oidc`, and `step-up`. These developer guides require no login and specify the device grant and validation contract.
 - Official plugin repository: https://github.com/worldcoin/world-id-agent-plugin — portal registration and HTTPS callback requirements.
 
-Live discovery and public guide retrieval succeeded. **No client is registered for this project yet; no end-user live verification has been completed.** Automated tests use an isolated test transport and generated RSA keys, never a runtime mock mode.
+Live discovery and public guide retrieval succeeded. **A client is registered and its credentials are configured in Vercel Production. Live device initiation succeeded on 2026-09-26; no end-user live verification has been completed.** Automated tests use an isolated test transport and generated RSA keys, never a runtime mock mode.
 
 ## Integration debrief — fill in only after a live run
 
-- Time to first successful end-user verification: not measured; registration pending.
+- Time to first successful end-user verification: not measured; registration complete and live device initiation verified.
 - Friction observed: the docs page provides an overview; detailed endpoint contracts are exposed through public MCP guides. Registration requires an HTTPS redirect even for a localhost device-flow demo that never uses it.
-- Missing capability observed in this prototype: credentials and a registered client; no claim that the provider lacks necessary features.
+- Missing capability observed in this prototype: completed end-user verification evidence; no claim that the provider lacks necessary features.
 - Suggested improvement: a clearly linked device-only onboarding guide that explains the callback requirement upfront.
 - Still to capture: successful verification and protected handoff, denial/cancellation, stale identity handling, and actual timing. Record redacted evidence without identity tokens, user subjects, or secrets.

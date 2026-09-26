@@ -2,7 +2,11 @@
 
 Resume interrupted agent work under a fixed remaining budget, with World ID verification protecting a change of control.
 
-## Run
+## Deployed app
+
+**https://continuity-ruddy.vercel.app** — Python backend on Vercel Hobby with encrypted sessions in Free Upstash Redis. See [deployment and World registration URL](docs/deployment.md). World credentials are configured in Production; live device-request initiation has been verified. End-user verification is still pending.
+
+## Run locally
 
 Python 3.9+:
 
@@ -24,12 +28,12 @@ Connect the job owner through World, start the primary worker, inject a crash, a
 
 | Part | Status |
 | --- | --- |
-| World ID for Agents | Official sandbox OIDC device-grant client implemented, with backend signature/claim/freshness checks and owner-bound consent. Registration and first live user verification pending. No runtime mock fallback. |
+| World ID for Agents | Official sandbox OIDC device-grant client implemented, with backend signature/claim/freshness checks and owner-bound consent. Registered and deployed; live device initiation verified. First completed user verification pending. No runtime mock fallback. |
 | ENS / Intercepta / x402 | Not integrated; successor discovery, screening, and money remain fixtures. |
 | Research dataset | Synthetic records; no live GitHub research. |
 | Local authority | Enforced state transitions, integer budget, authority epochs, fixed batches, and single-use verification evidence. |
 
-World sandbox identities are test identities. No money moves. Capsules are plaintext and receipts are unsigned. Browser sessions and jobs are in memory; restarting loses them. The server is local-only, not a deployed payment service.
+World sandbox identities are test identities. No money moves. Capsules are plaintext and receipts are unsigned. Local sessions are in memory. Deployed sessions are encrypted in Redis with a one-hour idle expiry and fenced request leases. This is still a demo, not a production payment service.
 
 ## Files
 
