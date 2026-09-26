@@ -14,24 +14,24 @@ The hypothesis to test: users and agent developers need recovery that preserves 
 
 ## What exists now
 
-Run `python3 -m continuity.server`, then open http://127.0.0.1:8000.
+Install `requirements.txt` in `.venv`, configure the registered World sandbox client in `.env`, and run `.venv/bin/python -m continuity.server`. Open http://127.0.0.1:8000. See [World setup](docs/world-id.md).
 
-- A deterministic Python state machine and browser interface, with no third-party dependencies.
+- A deterministic Python state machine and browser interface, with PyJWT/cryptography for World token validation.
 - A 100,000-unit simulated budget, displayed as 0.10 USDC. The primary batch consumes 60,000 units; the successor batch consumes 40,000. These are chosen demo prices, not market prices or actual USDC transfers.
 - A checkpoint containing 17 completed fixture records, job identity, next record, remaining budget, action scope, expiry, and authority epoch.
 - Four explicit screening fixtures: pass, changed payee with passing screening, deny, and unavailable.
-- A local consent simulation bound to a pending action hash, with cancellation, expiry, and replay rejection.
+- A real World sandbox OIDC device-grant integration with backend validation, original-owner matching, fresh verification, and separate action-bound consent. Registration and first live user verification remain pending.
 - CSV export and a JSON receipt containing a SHA-256 event hash chain.
 - Tests for the local authority, budget, duplicate-work, approval, and expiry boundaries.
 
-All state is in memory. One local browser session controls one job. There are no independently authenticated agents, real payments, deployed contracts, live sponsor calls, encrypted capsules, or cryptographic signatures. The hash chain is unsigned and can be recomputed by the server; it is not independently verifiable accountability.
+All state is in memory. Each browser session controls its own job. World device-grant and token validation code is implemented; no successful end-user live verification is claimed yet. There are no independently authenticated workers, real payments, deployed contracts, ENS/Intercepta/x402 integrations, encrypted capsules, or signed receipts. The hash chain is unsigned and can be recomputed by the server; it is not independently verifiable accountability.
 
 ## Demo script and acceptance criteria
 
-1. Start the primary worker. Observe 17/30 rows, 0.06 simulated USDC spent, 0.04 remaining.
+1. Connect the job owner through World sandbox, then start the primary worker. Observe 17/30 rows, 0.06 simulated USDC spent, 0.04 remaining.
 2. Inject a worker crash. The server clears the active worker and increments the authority epoch. The existing checkpoint remains available to the local operator.
 3. Select an approved successor. Passing fixture checks grant only the remaining batch. Resume and download the 30-row CSV.
-4. Reset and repeat with a changed payout. This fixture passes risk screening but requires explicit local consent. Cancel: no backup starts, no further spend occurs. Reset to demonstrate approval separately; cancellation cannot be replayed into approval.
+4. Reset and repeat with a changed payout. This fixture passes risk screening but requires fresh World verification of the same job owner followed by explicit consent. Cancel: no backup starts, no further spend occurs. Reset to demonstrate approval separately; cancellation cannot be replayed into approval.
 5. Reset and repeat with risk denied or screening unavailable. Both block. Human consent cannot override these outcomes.
 6. The job expires after ten minutes; consent expires after at most two minutes. Neither approval nor retry extends the job deadline.
 
@@ -83,13 +83,13 @@ Next experiment: obtain a sandbox key, verify the current request/response schem
 
 No Intercepta API client exists in the starter. The fixture scenarios are not vendor verdicts.
 
-### World ID for Agents: identity evidence plus explicit consent
+### World ID for Agents: implemented integration, live validation pending
 
 The pasted event brief calls for the official development environment, backend validation, and a denied/expired/cancelled path. It explicitly says event proofs use fake identities and must not be relied on in production.
 
-The linked [event documentation](http://sandbox.auth.world.org/docs) could not be retrieved during this implementation. Consequently no endpoint, SDK contract, credential behavior, or approval-binding capability is asserted here. The [official plugin repository](https://github.com/worldcoin/world-id-agent-plugin) is a follow-up resource from the brief, not an implemented dependency.
+The official service and public MCP guides were successfully retrieved on 2026-09-26. `continuity/world.py` now implements the documented confidential-client device flow: discovery, device initiation, timed polling, JWKS signature validation, identity and freshness checks. The app first establishes the job owner, then requires a fresh matching identity for a changed-payout handoff. A separate explicit consent action consumes verification evidence bound to the exact intent hash. Device codes, tokens, and subjects stay on the backend.
 
-Next experiment: confirm the official integration with the event team; establish how the authenticated identity maps to this job's owner; validate responses on the backend; separately capture explicit consent to an immutable action intent; reject mismatched, replayed, expired, and cancelled requests. Identity verification by itself is not evidence of agreement to a payment or handoff.
+No client is registered yet and no live end-user verification has completed. Missing configuration blocks execution; there is no fake approval fallback. See [setup, validation details, sources, and debrief](docs/world-id.md). Next evidence: register the client, complete a successful protected handoff, demonstrate denial/cancellation and wrong-owner rejection with the actual service, and record timings without exposing tokens or identities.
 
 ### x402: bounded paid requests
 
@@ -107,7 +107,7 @@ Incrementing a local epoch cannot invalidate an already signed external authoriz
 | 1 — durable execution | SQLite transactions, job/batch uniqueness constraints, authenticated worker requests, checkpoint persistence | Kill/restart at every transition; stale worker and concurrent retry tests |
 | 2 — actual paid batch | Test x402 endpoint, bounded signing service, payment-intent ledger and reconciliation | Settlement evidence; ambiguous response/retry does not double-charge |
 | 3 — resolution and screening | ENSv2 resolver and live Intercepta adapters | Recorded permission test and live pass/block results gate signing |
-| 4 — owner-authorized handoff | Validated World event flow plus explicit intent consent | Wrong owner, cancellation, expiry, and replay cause no successor action |
+| 4 — owner-authorized handoff (code implemented) | World sandbox device flow and explicit intent consent; register client and run live | Automated rejection tests; live success/denial evidence still pending |
 | 5 — protected capsules | Authenticated recipient key selection, authenticated encryption, retention policy, signed receipts | Wrong recipient fails decryption; tampering fails verification |
 
 Use established cryptographic libraries for milestone 5; the starter intentionally contains no custom encryption. Exclude old credentials and payment secrets from every capsule. Key rotation does not erase information already disclosed to an earlier worker.

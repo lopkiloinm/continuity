@@ -70,7 +70,7 @@ class HandoffTests(unittest.TestCase):
         with self.assertRaises(Rejected):
             self.job.resume()
         token = digest(self.job.approval)
-        self.job.decide(True, token)
+        self.job.decide(True, token, {'binding': token, 'expires_at': self.now + 120})
         with self.assertRaises(Rejected):
             self.job.decide(True, token)
         self.job.resume()

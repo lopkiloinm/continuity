@@ -1,89 +1,204 @@
-"""Loopback-only, single-process demo server. Not a production authentication boundary."""
+"""Loopback demo with per-browser jobs and backend-validated World OIDC."""
 import csv
 import io
 import json
+import secrets
+import time
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from continuity.engine import Job, Rejected
+from continuity.engine import Job, Rejected, digest
+from continuity.world import Config, WorldClient, WorldFlow, WorldError, load_env
 
-STATIC = Path(__file__).resolve().parent.parent / "static"
-job = Job()
+ROOT = Path(__file__).resolve().parent.parent
+STATIC = ROOT / 'static'
+load_env(ROOT / '.env')
+world_client = WorldClient(Config.from_env())
+sessions = {}
+
+
+class Session:
+    def __init__(self):
+        self.job = Job()
+        self.owner = None
+        self.world = WorldFlow(world_client)
+        self.touched = time.time()
+
+    def snapshot(self):
+        data = self.job.snapshot()
+        data['world'] = self.world.public()
+        data['world']['owner_connected'] = self.owner is not None
+        data['world']['can_approve'] = bool(data['world']['can_approve'] and self.world.attempt['purpose'] == 'handoff')
+        return data
+
+    def binding(self):
+        if self.world.attempt and self.world.attempt['purpose'] == 'handoff':
+            if self.job.state != 'awaiting_approval':
+                return None
+            return digest(self.job.approval)
+        return self.job.id if self.job.state == 'ready' else None
 
 
 class Handler(BaseHTTPRequestHandler):
-    def send(self, status, data, content_type="application/json"):
-        body = json.dumps(data).encode() if content_type == "application/json" else data
+    def log_message(self, format, *args):
+        # Avoid logging OAuth codes or callback query strings if routes change later.
+        pass
+
+    def get_session(self):
+        now = time.time()
+        for key in list(sessions):
+            if now - sessions[key].touched > 3600:
+                del sessions[key]
+        cookie = SimpleCookie()
+        try:
+            cookie.load(self.headers.get('Cookie', ''))
+            sid = cookie['continuity_session'].value if 'continuity_session' in cookie else None
+        except Exception:
+            sid = None
+        if sid not in sessions:
+            sid = secrets.token_urlsafe(32)
+            sessions[sid] = Session()
+            self.new_cookie = sid
+        sessions[sid].touched = now
+        return sessions[sid]
+
+    def send(self, status, data, content_type='application/json'):
+        body = json.dumps(data).encode() if content_type == 'application/json' else data
         self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header('Content-Type', content_type)
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('Referrer-Policy', 'no-referrer')
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+        if getattr(self, 'new_cookie', None):
+            self.send_header('Set-Cookie', 'continuity_session=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600' % self.new_cookie)
         self.end_headers()
         self.wfile.write(body)
 
+    def valid_origin(self):
+        expected = '127.0.0.1:%d' % self.server.server_port
+        return self.headers.get('Host') == expected and self.headers.get('Origin', 'http://' + expected) == 'http://' + expected
+
     def do_GET(self):
+        if not self.valid_origin():
+            return self.send(403, {'error': 'Use the local demo origin http://127.0.0.1:%d.' % self.server.server_port})
+        session = self.get_session()
+        job = session.job
         path = urlparse(self.path).path
-        if path in ("/api/job", "/api/receipt"):
-            return self.send(200, job.snapshot())
-        if path == "/api/result.csv":
-            if job.state != "completed":
-                return self.send(409, {"error": "Complete the job before exporting."})
+        if path in ('/api/job', '/api/receipt'):
+            data = session.snapshot() if path == '/api/job' else job.snapshot()
+            return self.send(200, data)
+        if path == '/api/result.csv':
+            if job.state != 'completed':
+                return self.send(409, {'error': 'Complete the job before exporting.'})
             buffer = io.StringIO()
-            writer = csv.DictWriter(buffer, fieldnames=["record_id", "source", "description", "worker"])
+            writer = csv.DictWriter(buffer, fieldnames=['record_id', 'source', 'description', 'worker'])
             writer.writeheader()
             writer.writerows(job.rows)
-            return self.send(200, buffer.getvalue().encode(), "text/csv; charset=utf-8")
-        files = {"/": ("index.html", "text/html; charset=utf-8"),
-                 "/app.js": ("app.js", "text/javascript; charset=utf-8"),
-                 "/style.css": ("style.css", "text/css; charset=utf-8")}
+            return self.send(200, buffer.getvalue().encode(), 'text/csv; charset=utf-8')
+        files = {'/': ('index.html', 'text/html; charset=utf-8'),
+                 '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                 '/style.css': ('style.css', 'text/css; charset=utf-8')}
         if path in files:
             name, mime = files[path]
             return self.send(200, (STATIC / name).read_bytes(), mime)
-        self.send(404, {"error": "Not found"})
+        self.send(404, {'error': 'Not found'})
 
     def do_POST(self):
-        global job
-        # JSON-only, same-origin mutations prevent cross-site form submissions.
-        expected_host = "127.0.0.1:%d" % self.server.server_port
-        if self.headers.get("Host") != expected_host or self.headers.get("Origin", "http://" + expected_host) != "http://" + expected_host:
-            return self.send(403, {"error": "Use the local demo origin."})
-        if self.headers.get("Content-Type") != "application/json":
-            return self.send(415, {"error": "JSON required"})
+        if not self.valid_origin():
+            return self.send(403, {'error': 'Use the local demo origin.'})
+        if self.headers.get('Content-Type') != 'application/json':
+            return self.send(415, {'error': 'JSON required'})
+        session = self.get_session()
+        job = session.job
         try:
-            size = int(self.headers.get("Content-Length", "0"))
+            size = int(self.headers.get('Content-Length', '0'))
             if not 0 < size <= 4096:
-                raise ValueError("Expected a small JSON object")
+                raise ValueError('Expected a small JSON object')
             data = json.loads(self.rfile.read(size))
             if not isinstance(data, dict):
-                raise ValueError("Expected a JSON object")
-            if self.path == "/api/reset":
-                job = Job()
-            elif self.path == "/api/start":
+                raise ValueError('Expected a JSON object')
+            if self.path == '/api/reset':
+                session.world.cancel()
+                session.job = Job()
+                session.owner = None
+                session.world = WorldFlow(world_client)
+            elif self.path == '/api/world/start':
+                purpose = data.get('purpose')
+                if purpose == 'owner':
+                    job.require('ready')
+                    if session.owner is not None:
+                        raise Rejected('This job already has an owner.')
+                    session.world.start('owner', job.id, deadline=job.expires_at)
+                elif purpose == 'handoff':
+                    job.require('awaiting_approval')
+                    if session.owner is None:
+                        raise Rejected('Connect the job owner first.')
+                    if data.get('approval_hash') != digest(job.approval):
+                        raise Rejected('Approval intent mismatch.')
+                    if time.time() >= job.approval['expires_at']:
+                        raise Rejected('Approval expired. Reset to create a new job.')
+                    session.world.start('handoff', digest(job.approval), session.owner, job.approval['expires_at'])
+                    job.record('world_requested', 'Fresh World sandbox verification requested for this handoff.')
+                else:
+                    raise ValueError('Unknown verification purpose')
+            elif self.path == '/api/world/poll':
+                identity = session.world.poll(session.binding())
+                if identity is not None:
+                    if session.world.attempt['purpose'] == 'owner':
+                        session.owner = identity
+                        session.world.consume(job.id)
+                        job.record('owner_connected', 'Job owner established by backend-validated World sandbox identity.')
+                    else:
+                        job.record('world_verified', 'Same owner freshly verified by World sandbox. Explicit handoff consent still required.')
+                elif session.world.error and session.world.attempt['purpose'] == 'handoff' and job.state == 'awaiting_approval':
+                    job.decide(False, digest(job.approval))
+                    job.record('world_rejected', session.world.error['message'])
+            elif self.path == '/api/world/cancel':
+                session.world.cancel()
+                if job.state == 'awaiting_approval':
+                    job.decide(False, digest(job.approval))
+            elif self.path == '/api/start':
+                if session.owner is None:
+                    raise Rejected('Connect the job owner with World ID first.')
                 job.start()
-            elif self.path == "/api/fail":
+            elif self.path == '/api/fail':
                 job.fail()
-            elif self.path == "/api/evaluate":
-                job.evaluate(data.get("scenario"))
-            elif self.path == "/api/decide":
-                if type(data.get("approved")) is not bool:
-                    raise ValueError("approved must be a boolean")
-                job.decide(data["approved"], data.get("approval_hash"))
-            elif self.path == "/api/resume":
+            elif self.path == '/api/evaluate':
+                job.evaluate(data.get('scenario'))
+            elif self.path == '/api/decide':
+                if type(data.get('approved')) is not bool:
+                    raise ValueError('approved must be a boolean')
+                job.require('awaiting_approval')
+                if data.get('approval_hash') != digest(job.approval):
+                    raise Rejected('Approval intent mismatch.')
+                if data['approved']:
+                    evidence = session.world.consume(digest(job.approval))
+                    job.decide(True, data['approval_hash'], evidence)
+                else:
+                    session.world.cancel()
+                    job.decide(False, data['approval_hash'])
+            elif self.path == '/api/resume':
                 job.resume()
             else:
-                return self.send(404, {"error": "Unknown action"})
-            self.send(200, job.snapshot())
+                return self.send(404, {'error': 'Unknown action'})
+            self.send(200, session.snapshot())
+        except WorldError as error:
+            self.send(503 if error.code in ('not_configured', 'unavailable') else 409,
+                      {'error': str(error), 'code': error.code})
         except Rejected as error:
-            self.send(409, {"error": str(error)})
+            self.send(409, {'error': str(error)})
         except (ValueError, TypeError) as error:
-            self.send(400, {"error": str(error)})
+            self.send(400, {'error': str(error)})
 
 
 def main():
-    server = HTTPServer(("127.0.0.1", 8000), Handler)
-    print("Continuity simulation: http://127.0.0.1:8000", flush=True)
+    server = HTTPServer(('127.0.0.1', 8000), Handler)
+    print('Continuity: http://127.0.0.1:8000', flush=True)
+    print('World sandbox: ' + ('configured' if world_client.config.configured else 'add credentials to .env'), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -92,5 +207,5 @@ def main():
         server.server_close()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

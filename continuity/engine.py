@@ -29,6 +29,7 @@ class Job:
         self.capsule = None
         self.approval = None
         self.scenario = None
+        self.world_receipt = None
         self.record("created", "Local fixture job created; no funds deposited.")
 
     def record(self, kind, reason):
@@ -97,7 +98,7 @@ class Job:
                              "capsule_hash": digest(self.capsule), "epoch": self.epoch,
                              "max_micro_usdc": self.budget - self.spent,
                              "action": "complete_fixture_csv", "expires_at": min(self.expires_at, self.clock() + 120)}
-            self.record("approval_requested", "Fixture risk passed, but payee changed. Explicit local demo consent required.")
+            self.record("approval_requested", "Fixture risk passed, but payee changed. Fresh owner verification and explicit consent required.")
         else:
             self.grant()
 
@@ -105,7 +106,7 @@ class Job:
         self.state, self.agent = "successor_working", "backup.local"
         self.record("successor_granted", "Local policy grants backup only the remaining batch and budget.")
 
-    def decide(self, approved, approval_hash):
+    def decide(self, approved, approval_hash, evidence=None):
         self.require("awaiting_approval")
         if approval_hash != digest(self.approval):
             raise Rejected("Approval does not match the pending action.")
@@ -116,7 +117,10 @@ class Job:
             self.state = "cancelled"
             self.record("approval_cancelled", "No successor authority granted; budget remains simulated and unused.")
         else:
-            self.record("demo_consent", "Local demo consent recorded; no World verification performed.")
+            if not evidence or evidence.get('binding') != approval_hash or self.clock() >= evidence.get('expires_at', 0):
+                raise Rejected("Fresh backend-validated World verification is required.")
+            self.world_receipt = copy.deepcopy(evidence)
+            self.record("owner_consent", "Explicit handoff consent after backend-validated World sandbox verification.")
             self.grant()
 
     def resume(self):
@@ -134,5 +138,6 @@ class Job:
                 "capsule": self.capsule, "capsule_hash": digest(self.capsule) if self.capsule else None,
                 "approval": self.approval, "approval_hash": digest(self.approval) if self.approval else None,
                 "events": self.events, "artifact_hash": digest(self.rows) if self.state == "completed" else None,
-                "limitations": ["Synthetic records", "Simulated spending", "No ENS, Intercepta, World or x402 calls",
+                "world_receipt": self.world_receipt,
+                "limitations": ["Synthetic records", "Simulated spending", "No ENS, Intercepta or x402 calls", "World sandbox uses test identities",
                                 "Unsigned hashes; not independent proof", "In-memory state; restart resets all jobs"]})
