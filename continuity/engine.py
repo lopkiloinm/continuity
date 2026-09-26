@@ -65,6 +65,8 @@ class Job:
 
     def start(self):
         self.require("ready")
+        if self.clock() >= self.expires_at:
+            raise Rejected("Job expired; create a new job.")
         self.state, self.agent = "primary_working", "primary.local"
         self.commit_batch(self.agent, self.epoch, 0, 17, 60_000)
 

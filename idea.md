@@ -1,368 +1,123 @@
-Better project direction: Continuity
-Pitch:
-An agent handoff protocol for paid, long-running work: when an AI agent, API, or autonomous service stops, fails, loses access, or needs escalation, Continuity transfers the job—with its scoped budget, evidence, and accountability trail—to a verified successor without the user restarting from zero.
+# Continuity — bounded handoffs for interrupted agent work
 
-This is not “analytics for x402,” nor “put x402 in front of an existing API.”
+## Product hypothesis
 
-It solves a different and underexplored friction:
+A user delegates a paid, multi-step job. The worker fails after producing useful results. Continuity checkpoints that progress and lets an eligible successor finish within the original constraints and remaining budget.
 
-A user delegates an action to an agent, the agent begins paid work, and then something breaks. Who can safely take over—without giving the successor unlimited wallet access, exposing private context, or forcing the user to reconstruct the task?
+The hypothesis to test: users and agent developers need recovery that preserves both work and spending boundaries. Demand, novelty, adoption, and competitive advantage have not been established. This is an application prototype, not yet an interoperable protocol.
 
-That failure mode becomes unavoidable as agents make real payments. Most agent-payment demos show the first payment. Very few design for what happens after delegation fails halfway through.
+**First user:** a developer operating a paid research worker and a separately configured backup worker.
 
-Why this is a stronger “winner-shaped” idea
-Glassbox402’s underlying lesson is not “add analytics.” It is:
+**First task:** produce a 30-row research CSV in two batches. The local implementation uses explicitly synthetic records. It does not claim to discover real GitHub repositories, inspect licenses, or measure current activity.
 
-Find a behavior already happening.
+**Success criterion:** after a deliberate failure at row 17, the backup completes rows 18–30 without charging twice for a batch or increasing the job budget. The old worker cannot commit through the local orchestrator after its authority epoch changes.
 
-Identify a hidden operational gap.
+## What exists now
 
-Add a small protocol surface that makes the ecosystem more usable.
+Run `python3 -m continuity.server`, then open http://127.0.0.1:8000.
 
-Make adoption incremental rather than requiring a new marketplace or network.
+- A deterministic Python state machine and browser interface, with no third-party dependencies.
+- A 100,000-unit simulated budget, displayed as 0.10 USDC. The primary batch consumes 60,000 units; the successor batch consumes 40,000. These are chosen demo prices, not market prices or actual USDC transfers.
+- A checkpoint containing 17 completed fixture records, job identity, next record, remaining budget, action scope, expiry, and authority epoch.
+- Four explicit screening fixtures: pass, changed payee with passing screening, deny, and unavailable.
+- A local consent simulation bound to a pending action hash, with cancellation, expiry, and replay rejection.
+- CSV export and a JSON receipt containing a SHA-256 event hash chain.
+- Tests for the local authority, budget, duplicate-work, approval, and expiry boundaries.
 
-Continuity applies that logic to delegated agent work, not APIs.
+All state is in memory. One local browser session controls one job. There are no independently authenticated agents, real payments, deployed contracts, live sponsor calls, encrypted capsules, or cryptographic signatures. The hash chain is unsigned and can be recomputed by the server; it is not independently verifiable accountability.
 
-Weak hackathon framing	Continuity framing
-“AI agents can pay each other”	“An agent can fail without losing the user’s work or money.”
-“Here is a wallet with safety features”	“Here is a reversible, scoped delegation contract that survives handoff.”
-“Here is agent identity”	“Identity determines which replacement agent may inherit which capability.”
-“Human approval is a login”	“Human approval is required only when control genuinely changes hands.”
-“We made a marketplace”	“We fixed an incident-response workflow agents will need in production.”
-It is technically substantial but has an elegant demo: an agent crashes, another resumes safely, and no one has to recreate the task.
+## Demo script and acceptance criteria
 
-The core interaction
-A user gives a travel/research/procurement agent a bounded job:
+1. Start the primary worker. Observe 17/30 rows, 0.06 simulated USDC spent, 0.04 remaining.
+2. Inject a worker crash. The server clears the active worker and increments the authority epoch. The existing checkpoint remains available to the local operator.
+3. Select an approved successor. Passing fixture checks grant only the remaining batch. Resume and download the 30-row CSV.
+4. Reset and repeat with a changed payout. This fixture passes risk screening but requires explicit local consent. Cancel: no backup starts, no further spend occurs. Reset to demonstrate approval separately; cancellation cannot be replayed into approval.
+5. Reset and repeat with risk denied or screening unavailable. Both block. Human consent cannot override these outcomes.
+6. The job expires after ten minutes; consent expires after at most two minutes. Neither approval nor retry extends the job deadline.
 
-“Find and reserve a refundable Tokyo–Lisbon flight under 180,000 JPY. Ask me only if an exception is needed.”
+The tests must also reject stale worker epochs, repeated batch commits, mismatched approval hashes, repeated approvals, and spending above the cap. These are local model guarantees, not claims about distributed execution or external settlement.
 
-The primary agent receives a handoff capsule:
+## State and data model
 
-task specification and constraints;
+`ready → primary_working → frozen → successor_working → completed`
 
-non-sensitive or encrypted working context;
+From `frozen`, a decision can instead enter `awaiting_approval`, `blocked`, or `expired`. Pending consent can grant successor authority, cancel, or expire. Cancelled and blocked jobs are terminal in this prototype; reset starts a separate job.
 
-remaining budget;
+| Object | Required fields / responsibility |
+| --- | --- |
+| Job | ID, deadline, budget, spent amount, active worker, authority epoch, state |
+| Checkpoint capsule | Version, job ID, completed records, next record, remaining budget, allowed action, expiry, epoch |
+| Approval intent | Job ID, successor, payee, capsule hash, epoch, maximum amount, action, expiry |
+| Event | Sequence, timestamp, transition reason, state, epoch, spent amount, previous hash, hash |
+| Output row | Stable fixture ID, synthetic provenance URI, description, producing worker |
 
-allowed merchant/service categories;
+Amounts use integers. The local hash convention is SHA-256 over Python's sorted compact JSON encoding. A cross-language protocol will need a specified canonical encoding, signature format, domain separation, and test vectors before other implementations can rely on it.
 
-payment authorization scope;
+The fixture successor is `backup.local`, a local identifier. No ownership or resolution of `continuity.eth` or any subname is claimed.
 
-deadline;
+## Decision policy
 
-artifacts already produced;
+For the first live version, all mandatory checks must pass: active job, unexpired authority, positive remaining budget, allowed capability, authenticated eligible successor, and fresh acceptable screening of the exact payment route. Unknown, timed-out, malformed, or denied screening fails closed.
 
-evidence hashes;
+A changed payee that otherwise passes screening may require owner consent. A denied risk verdict must not become acceptable merely because someone verifies their identity. An increased budget, expired job, unknown successor, or broader capability should require a separately authorized policy change, not a generic “approve anyway” button. These policy-change flows are outside the starter.
 
-current state-machine position;
+Before granting authority, re-read the approved policy and bind the successor identity, payee, token, network, amount, capsule hash, nonce, and deadline to the decision. Before signing a payment, check the same values again. The live design must specify how stale screening and changed resolver data invalidate consent.
 
-explicit successor policy.
+## Planned integrations and evidence needed
 
-It gets partway through the workflow, then fails—for demo purposes, its service key is revoked, its session times out, or its worker deliberately crashes.
+### ENSv2: successor discovery and public configuration
 
-Continuity then:
+The official [Permissioned Resolver documentation](https://docs.ens.domains/ensv2/permissioned-resolver/) describes address, text, and data records and role-controlled writes. Application-specific record keys for endpoints, keys, and successor policy would be **our proposed schema**, not a pre-existing Continuity or ENS standard.
 
-Freezes outstanding authority.
+A material constraint: resolver write permissions are scoped to record arguments such as a text key and apply across names served by that resolver; they are not per-name permissions. Assess separate resolver instances where isolation is required. Do not assume a parent/subname arrangement alone enforces the desired boundary. The documented interfaces are subject to change.
 
-Resolves permitted successor agents via ENSv2.
+Next experiment: obtain a controlled test namespace and confirm the current event deployment, resolve a backup endpoint and policy hash on Sepolia, demonstrate that the worker cannot alter successor-policy records, then revoke the successor and show the handoff failing. Capture network, deployment addresses, resolver reads, transaction hashes, and permission tests.
 
-Runs Intercepta preflight checks on the successor’s payout/payment setup.
+ENS public records do not make task data private. The application must separately authenticate the capsule recipient and authorize access. Never store private task context in public records.
 
-Determines whether the handoff is within the user’s preapproved policy.
+### Intercepta: screening that gates a payment
 
-If it is not, invokes World ID for Agents for a one-time human authorization.
+The supplied event brief requires a live API call before signing or accepting payment; fixtures do not qualify. It also specifies screening real mainnet addresses even if the payment occurs on a testnet. See the [Quick Scan Address reference](https://docs.web3antivirus.io/reference/quick-scan-address).
 
-Gives the successor only a capability-scoped, time-limited authority.
+Next experiment: obtain a sandbox key, verify the current request/response schema and supported networks, run one documented pass and one documented risk case, and save redacted evidence. Implement a backend adapter with explicit timeout, error handling, freshness, and verdict mapping. Confirm the additional token/message screening endpoints before claiming they cover a real authorization. Do not invent test addresses or infer “safe” from a successful HTTP status.
 
-Lets it complete the task or safely return the funds/unused authorization.
+No Intercepta API client exists in the starter. The fixture scenarios are not vendor verdicts.
 
-Creates an auditable cryptographic handoff receipt.
+### World ID for Agents: identity evidence plus explicit consent
 
-The user does not need to begin again. The successor does not inherit an unbounded wallet. The original agent cannot continue spending once the handoff occurs.
+The pasted event brief calls for the official development environment, backend validation, and a denied/expired/cancelled path. It explicitly says event proofs use fake identities and must not be relied on in production.
 
-Exactly three tracks
-1. ENS — Best Use of ENSv2
-Use ENSv2 as an agent delegation graph, rather than a profile page.
+The linked [event documentation](http://sandbox.auth.world.org/docs) could not be retrieved during this implementation. Consequently no endpoint, SDK contract, credential behavior, or approval-binding capability is asserted here. The [official plugin repository](https://github.com/worldcoin/world-id-agent-plugin) is a follow-up resource from the brief, not an implemented dependency.
 
-Example namespace:
+Next experiment: confirm the official integration with the event team; establish how the authenticated identity maps to this job's owner; validate responses on the backend; separately capture explicit consent to an immutable action intent; reject mismatched, replayed, expired, and cancelled requests. Identity verification by itself is not evidence of agreement to a payment or handoff.
 
-continuity.eth — protocol namespace
+### x402: bounded paid requests
 
-travel.alice.continuity.eth — the user’s task agent
+The [official buyer quickstart](https://docs.x402.org/getting-started/quickstart-for-buyers) documents clients that pay for HTTP resources. It does not establish a transferable or universally revocable agent-budget primitive. Continuity must own its budget and signing policy.
 
-recovery.alice.continuity.eth — approved replacement agent
+Next experiment: operate a test paid endpoint and a server-controlled signer; settle one bounded request and record the receipt. Use an idempotency key tied to job and batch, reconcile ambiguous settlements before retry, and account for chain fees separately. Never give either worker the owner's unrestricted wallet key.
 
-audit.alice.continuity.eth — optional evidence reader
+Incrementing a local epoch cannot invalidate an already signed external authorization. Before live handoff, outstanding payment intents must be settled, expired, cancelled where supported, or reserved against the remaining budget. Do not advertise exactly-once payments until reconciliation and crash-recovery tests support that claim.
 
-ENS records hold:
+## Next implementation milestones
 
-agent endpoint;
+| Milestone | Concrete deliverable | Exit evidence |
+| --- | --- | --- |
+| 0 — local model (implemented) | State machine, fixture UI, exports, tests | Successful recovery and blocked/cancelled paths; automated invariant tests |
+| 1 — durable execution | SQLite transactions, job/batch uniqueness constraints, authenticated worker requests, checkpoint persistence | Kill/restart at every transition; stale worker and concurrent retry tests |
+| 2 — actual paid batch | Test x402 endpoint, bounded signing service, payment-intent ledger and reconciliation | Settlement evidence; ambiguous response/retry does not double-charge |
+| 3 — resolution and screening | ENSv2 resolver and live Intercepta adapters | Recorded permission test and live pass/block results gate signing |
+| 4 — owner-authorized handoff | Validated World event flow plus explicit intent consent | Wrong owner, cancellation, expiry, and replay cause no successor action |
+| 5 — protected capsules | Authenticated recipient key selection, authenticated encryption, retention policy, signed receipts | Wrong recipient fails decryption; tampering fails verification |
 
-capability-manifest URI/hash;
+Use established cryptographic libraries for milestone 5; the starter intentionally contains no custom encryption. Exclude old credentials and payment secrets from every capsule. Key rotation does not erase information already disclosed to an earlier worker.
 
-approved successor set;
+## Submission scope and unresolved questions
 
-public key for handoff capsule encryption;
+The supplied sponsor text is preserved in [docs/sponsor-brief.txt](docs/sponsor-brief.txt). It is user-provided event material, not a separately verified record of current prize rules. The original proposal is preserved in [docs/original-idea.md](docs/original-idea.md).
 
-receipt-verification key;
+ENSv2, Intercepta, and World are candidate tracks. This starter does not satisfy their integration requirements, and Continuity-track eligibility has not been established. Confirm eligibility with the organizers before choosing a track. Do not report integration timings, feedback, real users, live calls, or deployed contracts until actually observed.
 
-service capability tags;
+Open questions: who operates and authenticates the successor; who holds the signer; what happens after settlement succeeds but the response is lost; how checkpoint quality is validated; and whether a developer will integrate this rather than use existing orchestration retries. Interview a developer with a real failed paid workflow and reproduce that failure before expanding scope.
 
-active/revoked status;
-
-delegation-policy hash.
-
-ENSv2’s delegated permissions become meaningful:
-
-The primary agent can update its endpoint or rotate a signing key.
-
-It cannot authorize a new successor.
-
-The user’s policy controller can permit successors.
-
-A recovery agent can read only capsules assigned to it.
-
-A treasury role is separate from execution roles.
-
-A handoff is only allowed if the destination subname is authorized by the policy resolver at the moment it happens. This is a genuinely natural use of hierarchical agent namespaces and role-limited permissions, which the ENS track specifically emphasizes.
-
-2. Intercepta — Safe Agent-to-Agent Payments with x402
-Do not make Intercepta a decorative “scan the address” widget.
-
-The actual payment decision should be:
-
-handoff allowed
-=
-policy permits successor
-∧
-budget remains
-∧
-Intercepta risk is acceptable
-∧
-authority is unexpired
-handoff allowed=policy permits successor∧budget remains∧Intercepta risk is acceptable∧authority is unexpired
-Before a successor agent receives payment authority or pays an external service:
-
-Call Intercepta against the successor settlement address.
-
-Scan a real payment authorization/message.
-
-Verify the payment token.
-
-Display the decision clearly:
-
-green: auto-handoff;
-
-amber: hold for human authorization;
-
-red: block and retain/revoke the capsule.
-
-The most compelling failure scenario is not a random “bad address.” It is:
-
-The trusted primary research agent fails. Its nominated backup has a newly changed settlement address and a risky authorization pattern. Continuity refuses to transfer the remaining 0.08 USDC authority until the owner reviews and authorizes it.
-
-That turns Intercepta into the safety boundary of a real delegation protocol. Intercepta’s track requires a live pre-payment API call that changes the payment outcome, along with a visible passed and blocked/held scenario.
-
-3. World — Best Use of World ID for Agents
-Use World only for change-of-control consent, not log-in.
-
-Human verification is triggered when the handoff crosses a policy boundary:
-
-New successor not in the preapproved set.
-
-Successor requests a higher budget.
-
-Payout address has changed.
-
-Work context includes protected data.
-
-The agent wants to extend an expired authorization.
-
-The task becomes irreversible, such as a booking or an on-chain transfer.
-
-World verification produces a narrowly bound authorization:
-
-json
-{
-  "handoffId": "handoff_73a9",
-  "fromAgent": "travel.alice.continuity.eth",
-  "toAgent": "backup.vendor.continuity.eth",
-  "maxSpend": "0.08 USDC",
-  "allowedAction": "complete_refundable_flight_hold",
-  "expiresAt": "2026-09-26T10:05:00Z"
-}
-A cancelled, denied, or expired proof means:
-
-the successor receives no decrypted capsule;
-
-the x402 payment authorization cannot execute;
-
-remaining authority is frozen or returned;
-
-the interface shows the exact state and resolution path.
-
-That matches World’s intended agent use: a meaningful user decision made at the point where an agent needs authority beyond an established limit—not an identity badge on the landing page.
-
-The differentiator: transferable authority, not transferable chat
-The project’s novel object is a Handoff Capsule.
-
-Most agent frameworks save state as messages, JSON, traces, or memory. Those are not safe to hand over because they omit authority boundaries. Your capsule combines:
-
-text
-Task state
-+ constraints
-+ bounded payment authority
-+ cryptographic artifacts/evidence
-+ recipient-specific encrypted context
-+ successor eligibility policy
-+ expiry/revocation semantics
-= safe resumable delegation
-This makes it more than an orchestration demo.
-
-The handoff receipt should show:
-
-Field	Why it matters
-Original agent ENS identity	Establishes who held authority first
-Successor ENS identity	Establishes who received limited authority
-Capsule hash	Proves which task state was transferred
-Budget before/after	Shows that handoff did not increase authority silently
-Risk verdict	Records why the transfer passed, held, or failed
-World approval hash, if needed	Shows narrowly scoped human intervention
-Revocation event	Proves the original agent lost authority
-Completion/artifact hashes	Lets a user audit what the successor actually delivered
-The elegant part is that this same structure can later serve support escalation, agent portability, provider migration, key rotation, scheduled automation, and enterprise audit.
-
-Best demo scenario
-Avoid travel booking as the actual transaction unless you have reliable test infrastructure. Use a paid research/data-enrichment job so the work can complete deterministically.
-
-User story
-A founder delegates:
-
-“Collect 30 recent open-source GitHub repositories related to on-device multimodal inference. Deduplicate them, extract license and activity metrics, and give me a CSV. Spend up to 0.10 USDC.”
-
-What happens
-The primary research agent gets a bounded 0.10 USDC x402 work order.
-
-It purchases/starts a retrieval or enrichment task.
-
-It completes 17 of 30 results.
-
-The service intentionally crashes or loses its key.
-
-Continuity freezes its remaining authority.
-
-The system discovers backup.research.continuity.eth through ENSv2.
-
-It verifies delegated successor rights and resolves the successor’s receipt key and endpoint.
-
-Intercepta preflights the successor payment path.
-
-In the clean path, the backup receives an encrypted capsule and finishes the remaining 13 records.
-
-In the risk path, the backup has an altered payout/unsafe authorization, so the system holds the handoff.
-
-A World verification request asks whether to allow this exact successor to use the remaining 0.04 USDC.
-
-Show cancellation first: nothing proceeds.
-
-Then approve: the backup receives only the remaining budget and completes the task.
-
-The final downloadable CSV includes per-row provenance and the handoff receipt proves no duplicated payment or authority escalation occurred.
-
-The user’s “wow” moment is not a blockchain transaction. It is:
-
-“The work continued after the agent failed, but my money and context did not become uncontrolled.”
-
-Architecture that fits a hackathon
-Frontend
-A single state-machine timeline:
-
-text
-Delegated
-→ Primary working
-→ Failure detected
-→ Authority frozen
-→ Successor resolved
-→ Risk checked
-→ Human approval required / not required
-→ Capsule transferred
-→ Work resumed
-→ Receipt finalized
-Add a “chaos switch” that causes one of three failure modes:
-
-Worker crash.
-
-Expired authority.
-
-Unexpected successor payout-address change.
-
-That makes the concept instantly demoable.
-
-Backend
-Orchestrator: TypeScript, Hono/Next.js routes, or FastAPI.
-
-Agent runtime: lightweight LangGraph/state machine, but avoid making framework usage your story.
-
-Storage: encrypted object blob for capsule payload; put only hash and metadata on-chain or in verifiable receipts.
-
-Cryptography: encrypt the sensitive capsule to the successor’s published encryption key; sign every state transition.
-
-Payments: x402 transaction/authorization only for the bounded work portion.
-
-Policy evaluator: deterministic JSON policy rather than LLM judgment.
-
-Smart-contract scope
-Keep contracts minimal:
-
-HandoffRegistry: records capsule hash, state, successor, expiry, and revocation.
-
-Optional ScopedEscrow: locks only the remaining work budget and releases only after completion criteria.
-
-You can avoid a complex escrow contract entirely if that endangers the demo. A verifiable, server-enforced authority token plus x402 preflight still tells the intended story. But a tiny registry contract strengthens auditability.
-
-Why this does not become sponsor bingo
-Each sponsor integration is necessary at a different stage:
-
-Step	Primitive	What it prevents
-Find eligible successor	ENSv2	Unverifiable identity and uncontrolled authority delegation
-Evaluate handoff/payment route	Intercepta	Moving remaining budget to a risky or malicious successor
-Cross a human-defined boundary	World	Silent expansion of the agent’s authority
-Resume task	x402 + capsule	Restarting work, duplicate payment, or unconstrained wallet access
-Remove any one component and the product loses a meaningful property. That is exactly what judges mean by a natural integration.
-
-What not to build
-Do not spend time on:
-
-A full universal agent-memory format.
-
-An agent social network or marketplace.
-
-Generic “reputation scores.”
-
-A token, governance system, or points program.
-
-Multi-chain routing.
-
-An autonomous agent that performs an impressive but unreliable open-ended workflow.
-
-A generic dashboard with no forced decision.
-
-Your showcase should be the handoff moment, not the chat interface.
-
-Submission framing
-Title options
-Continuity — safe handoffs for paid AI agents
-
-Relay — bounded authority when agents fail
-
-Second Shift — resumable delegated work for agents
-
-Failover — x402 work that survives agent failure
-
-I would choose Continuity. It is product-like, immediately understandable, and avoids crypto jargon.
-
-Submission blurb
-Continuity lets paid AI-agent work survive failure without transferring uncontrolled wallet access. A failed agent packages its verified progress and remaining, scoped authority into an encrypted handoff capsule; an ENSv2-authorized successor can resume only after Intercepta preflights the payment path, while World ID provides human consent for high-risk changes of control.
-
-The memorable final line
-Delegation should survive failure. Authority should not.
+Defer escrow contracts, a marketplace, reputation scores, travel reservations, multichain support, and universal agent memory. The next useful proof is one recoverable paid batch with evidence of bounded authority.
