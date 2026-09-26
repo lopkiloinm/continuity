@@ -1,0 +1,673 @@
+Events
+ETHConf New
+Plus
+Showcase
+Faucet
+Swag
+About
+
+Open user menu
+Avatar
+ETHGlobal Tokyo 2026 logo
+ETHGlobal Tokyo 2026
+Overview
+Dashboard
+Project
+Team
+Mentors
+Info
+FAQ
+7 Prizes
+World logo
+World
+
+$15,000
+
+1inch logo
+1inch
+
+$7,000
+
+ENS logo
+ENS
+
+$10,000
+
+Uniswap logo
+Uniswap Foundation
+
+$10,000
+
+Sui logo
+Sui
+
+$5,000
+
+Curvegrid logo
+Curvegrid
+
+$3,000
+
+Intercepta logo
+Intercepta
+
+$2,500
+
+World logo
+World
+$15,000
+
+world.org
+worldnetwork
+Open page →
+About
+World’s developer stack helps builders create products for verified humans and AI-assisted interactions. World ID enables apps to confirm someone is a unique human without revealing their identity.
+
+Monid.ai promo code: WORLDID-HACKATHON-20
+
+Prizes
+🪪 Best Use of IDKit ⸺ $5,000
+Up to 2 teams will receive $2,500
+Build a product that uses IDKit to solve a real trust moment: an event where a product needs to know something meaningful about a person before it grants access, completes an action, or changes a user’s experience.
+
+Use the credential that is proportionate to your use case—such as Proof of Human, Passport/NFC, or Selfie Check (Now live with Sybil score). We are not rewarding the most credentials used. We are rewarding the best decision about which credential is needed, why it is needed, and how it improves a real product experience.
+
+Strong examples could include fair access to a scarce benefit, a privacy-preserving eligibility check, recovery or protection of an important account action, or a workflow that becomes safer or simpler because it can verify the right level of human trust.
+
+Qualification Requirements
+Integrate IDKit in a functioning application, mini app, or onchain flow.
+Use at least one supported World ID credential and verify the result on the server or onchain as appropriate.
+Clearly explain the specific product event requiring trust and why the chosen credential is the minimum sufficient assurance.
+Demonstrate a successful verification and one meaningful alternative path, such as cancellation, unavailable credential, rejection, or an ineligible user.
+Include a short integration debrief/feedback: time to first success, friction encountered, missing capability or documentation, and the one improvement with the greatest impact.
+Links and Resources
+IDKit integration guide
+https://docs.world.org/world-id/idkit/integrate
+↗
+Configure credentials
+https://docs.world.org/world-id/idkit/credentials
+↗
+Proof of Human credential
+https://docs.world.org/world-id/credentials/1
+↗
+Passport/NFC credential
+https://docs.world.org/world-id/credentials/9303
+↗
+Selfie Check Beta
+https://docs.world.org/world-id/credentials/11
+↗
+Verification flows
+https://docs.world.org/world-id/idkit/verification-flows
+↗
+Developer Portal
+https://developer.worldcoin.org
+↗
+IDKit JS Example
+https://idkit-js-example.vercel.app/
+↗
+🤖 Best Use of World ID for Agents ⸺ $5,000
+Up to 2 teams will receive $2,500
+![We are mocking proofs now, so you don't need sandbox app anymore]!
+
+Build an application using World ID for Agents. We are especially interested in agentic products, but any compelling use case is eligible.
+
+Show what becomes possible when an application can ask a person to authenticate or complete a fresh verification at the moment.
+
+Strong submissions will show a meaningful action that needs a human identity or approval layer, not simply a login screen added to an existing product.
+
+Qualification Requirements
+Integrate with the official World ID for Agents on dev environment provided for the event.
+Demonstrate the complete journey: identity or verification request, user completion, validated result, and the protected application or agent action.
+Demonstrate a denied, expired, cancelled, or otherwise unsuccessful path where the protected action does not occur.
+Validate identity results in a secure backend; do not expose client secrets or treat an unvalidated client response as authorization.
+Include a short integration debrief/feedback: time to first success, friction encountered, missing capability or documentation, and the one improvement with the greatest impact.
+Links and Resources
+World ID for Agents documentation
+http://sandbox.auth.world.org/docs
+↗
+AgentPlugin
+https://github.com/worldcoin/world-id-agent-plugin
+↗
+World ID for Agents Portal
+http://sandbox.auth.world.org/portal
+↗
+🎉 [Cont] Best IDKit Use Case ⸺ $2,500
+🆕  This prize is only available to Continuity Track participants →
+Build a product that uses IDKit to solve a real trust moment: an event where a product needs to know something meaningful about a person before it grants access, completes an action, or changes a user’s experience.
+
+Use the credential that is proportionate to your use case—such as Proof of Human, Passport/NFC, or Selfie Check (Now live with Sybil score). We are not rewarding the most credentials used. We are rewarding the best decision about which credential is needed, why it is needed, and how it improves a real product experience.
+
+Strong examples could include fair access to a scarce benefit, a privacy-preserving eligibility check, recovery or protection of an important account action, or a workflow that becomes safer or simpler because it can verify the right level of human trust.
+
+Qualification Requirements
+Integrate IDKit in a functioning application, mini app, or onchain flow.
+Use at least one supported World ID credential and verify the result on the server or onchain as appropriate.
+Clearly explain the specific product event requiring trust and why the chosen credential is the minimum sufficient assurance.
+Demonstrate a successful verification and one meaningful alternative path, such as cancellation, unavailable credential, rejection, or an ineligible user.
+Include a short integration debrief/feedback: time to first success, friction encountered, missing capability or documentation, and the one improvement with the greatest impact.
+Links and Resources
+IDKit Docs
+https://docs.world.org/world-id/overview
+↗
+🎉 Best Use of World ID for Agents ⸺ $2,500
+🆕  This prize is only available to Continuity Track participants →
+![We are mocking proofs now, so you don't need sandbox app anymore]!
+
+Build an application using World ID for Agents. We are especially interested in agentic products, but any compelling use case is eligible.
+
+Show what becomes possible when an application can ask a person to authenticate or complete a fresh verification at the moment.
+
+Strong submissions will show a meaningful action that needs a human identity or approval layer, not simply a login screen added to an existing product.
+
+NOTE: Proofs are using fake identities, DO NOT rely in them for production
+
+Qualification Requirements
+Integrate with the official World ID for Agents on dev environment provided for the event.
+Demonstrate the complete journey: identity or verification request, user completion, validated result, and the protected application or agent action.
+Demonstrate a denied, expired, cancelled, or otherwise unsuccessful path where the protected action does not occur.
+Validate identity results in a secure backend; do not expose client secrets or treat an unvalidated client response as authorization.
+Include a short integration debrief/feedback: time to first success, friction encountered, missing capability or documentation, and the one improvement with the greatest impact.
+Links and Resources
+Agent Pulgin
+https://github.com/worldcoin/world-id-agent-plugin
+↗
+World ID for Agents Docs
+http://sandbox.auth.world.org/docs
+↗
+Resources
+Simulator
+https://simulator.worldcoin.org/id/0x18310f83
+↗
+Workshop
+Watch Video →
+World's latest products (IDP vs IDKit)
+Build, test, and ship with World’s newest developer tools. We’ll walk through setting up a project in the new Devel...
+
+This workshop is happening in-person
+05:30 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+1inch logo
+1inch
+$7,000
+
+1inch.com
+1inch
+Open page →
+About
+1inch is a network of decentralized protocols that focus on unifying DeFi liquidity. Most known for our DEX aggregator launched in 2019, we have continued to improve and ship protocol, maintaining our position as one of the premiere players in the token swapping space.
+
+Our most recent release, Aqua, reimagines how DEXes are designed and is a perfect candidate for creative hackathon teams.
+
+Prizes
+💧 Build an Aqua App ⸺ $5,000
+🥇
+1st place
+$2,500
+🥈
+2nd place
+$1,500
+🥉
+3rd place
+$1,000
+Create a custom Aqua app that implements a sophisticated DeFi position. If you use SwapVM, you may modify SwapVM opcodes and define your own instructions. The final positions must be demonstrated through tests scripts or a UI.
+
+Projects that utilize SwapVM will be scored higher during the final judging.
+
+Qualification Requirements
+Official Aqua/SwapVM contracts must be used (redeployments of a modified SwapVM contract is allowed)
+Onchain execution of token transfers should be presented during the final demo (local forks are ok)
+Proper Git commit history (no single-commit entries on the final day)
+Links and Resources
+SwapVM Smart Contracts
+https://github.com/1inch/swap-vm/tree/main
+↗
+Aqua Smart Contracts
+https://github.com/1inch/aqua
+↗
+Aqua SDK
+https://github.com/1inch/sdks/tree/master/typescript/aqua
+↗
+💦 Build an Aqua App - Continuity Track ⸺ $2,000
+🆕  This prize is only available to Continuity Track participants →
+🥇
+1st place
+$1,500
+🥈
+2nd place
+$500
+Create a custom Aqua app that implements a sophisticated DeFi position. If you use SwapVM, you may modify SwapVM opcodes and define your own instructions. The final positions must be demonstrated through tests scripts or a UI.
+
+Projects that utilize SwapVM will be scored higher during the final judging.
+
+Qualification Requirements
+Official Aqua/SwapVM contracts must be used (redeployments of a modified SwapVM contract is allowed)
+Onchain execution of token transfers should be presented during the final demo (local forks are ok)
+Proper Git commit history (no single-commit entries on the final day)
+Links and Resources
+SwapVM Contracts
+https://github.com/1inch/swap-vm/tree/main
+↗
+Aqua Smart Contracts
+https://github.com/1inch/aqua
+↗
+Aqua SDK
+https://github.com/1inch/sdks/tree/master/typescript/aqua
+↗
+Resources
+SwapVM Whitepaper
+https://github.com/1inch/swap-vm/blob/release/1.1/docs/whitepaper-swap-vm-1.0.pdf
+↗
+Aqua Whitepaper
+https://github.com/1inch/aqua/blob/main/docs/whitepaper-aqua-1.0.pdf
+↗
+Workshop
+Watch Video →
+Reimagining the AMM with 1inch Aqua
+1inch Aqua solves many of the drawbacks of modern AMM design with self-custodial onchain liquidity. Join us as we ...
+
+This workshop is happening in-person
+05:00 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+Jobs
+
+Software Engineer Blockchain / Web3
+1inch
+→
+ENS logo
+ENS
+$10,000
+
+ens.domains
+ensdomains
+Open page →
+About
+ENS is the universal pointer for anything on the internet. It turns wallet addresses into human-readable names like yourname.eth — a portable, onchain profile that works across every app, chain, and wallet.
+
+Developers use ENS to replace raw addresses with real identities, build decentralized websites, and create scalable subname ecosystems. As AI agents become first-class onchain actors, ENS is how you give them a name, a reputation, and a place to be found.
+
+Prizes
+🧬 Best Use of ENSv2 ⸺ $6,000
+🥇
+1st place
+$3,000
+🥈
+2nd place
+$2,000
+🥉
+3rd place
+$1,000
+ENSv2 beta is now live on Sepolia — be among the first to build on it. Explore the new hierarchical registry structure: resolve subnames straight off a parent's resolver with wildcard resolution, or deploy your own subname registry to tokenize and manage subnames under your own rules. Use Enhanced Access Control, the shared, role-based permission system behind both registries and resolvers, to delegate specific rights — like letting an account edit only certain text records on a name. Give subnames their own Permissioned Resolver so they fully own their data, mix in record aliasing at the resolver level or namespace aliasing via a shared registry, and combine it all to build subname setups — expiring, revocable, non-transferable vs. transferable, even forever names with no parent control. Bonus points if you bring AI agents into the mix — think agents as namespaces, each with their own identity and permissions.
+
+Qualification Requirements
+Project must be built on ENSv2 (Sepolia). ENSv2 features should be central to the product, not a cosmetic add-on. Your demo must be functional and not just include hard-coded values. Upon submission, your project showcase must have a link to a live demo and the code needs to be open source and accessible on Github or a similar platform.
+
+Links and Resources
+Permissioned Registry docs
+https://docs.ens.domains/ensv2/permissioned-registry
+↗
+Permissioned Resolver docs
+https://docs.ens.domains/ensv2/permissioned-resolver/
+↗
+Enhanced Access Control docs
+https://docs.ens.domains/ensv2/enhanced-access-control/
+↗
+Guide for Contract Developers
+https://docs.ens.domains/ensv2/tutorial-contract-developers/
+↗
+🔗 Best Integration of ENSv2 into an Existing Project ⸺ $4,000
+🆕  This prize is only available to Continuity Track participants →
+🥇
+1st place
+$2,000
+🥈
+2nd place
+$1,000
+🥉
+3rd place
+$1,000
+ENSv2 is only live on Sepolia for now, so this track is about getting a head start: explore how ENSv2's feature set — the new registry hierarchy, Enhanced Access Control, Permissioned Resolvers, record and namespace aliasing — can plug into an existing protocol or project to improve the user experience or unlock entirely new use cases. Take a project you already know, yours or an open one, and integrate it against ENSv2 on its testnet deployment. This track pairs well with AI agent identity too — consider giving agents their own namespace and delegated permissions within your integration.
+
+Qualification Requirements
+Integration must use ENSv2 on Sepolia and target an existing project's testnet deployment. It should be clear how ENSv2 improves the project, not just a cosmetic add-on. Your demo must be functional and not just include hard-coded values. Upon submission, your project showcase must have a link to a live demo and the code needs to be open source and accessible on Github or a similar platform.
+
+Links and Resources
+Guide for App Developers
+https://docs.ens.domains/ensv2/tutorial-app-developers/
+↗
+Resources
+ENSv2 docs
+https://docs.ens.domains/ensv2/overview/
+↗
+Building with AI
+https://docs.ens.domains/building-with-ai/
+↗
+Agent-native CLI
+https://github.com/ensdomains/ens-cli
+↗
+AI Agent Registry ENS Name Verification
+https://docs.ens.domains/ensip/25/
+↗
+Agent Text Records
+https://docs.ens.domains/ensip/26/
+↗
+Workshop
+Watch Video →
+ENSv2 - Identity for Apps, Agents & Beyond
+An introduction to ENS as identity infrastructure for apps, AI agents and beyond, and what changes in ENSv2. Covers...
+
+This workshop is happening in-person
+03:00 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+Uniswap Foundation logo
+Uniswap Foundation
+$10,000
+
+uniswapfoundation.org
+uniswapfnd
+Open page →
+About
+The Uniswap Protocol is one of the largest decentralized exchange protocol for swapping value onchain across Ethereum and other supported blockchains. The Uniswap ecosystem has evolved into a full stack platform for onchain finance, including smart contracts such as v2, v3, and v4, developer tools, APIs, and emerging infrastructure like Unichain. This enables developers to build applications on top of shared, permissionless liquidity.
+
+Prizes
+🦄 Best Uniswap Stack Contribution ⸺ $6,000
+🥇
+1st place
+$3,000
+🥈
+2nd place
+$2,000
+🥉
+3rd place
+$1,000
+Build on or integrate any part of the Uniswap stack, including the Uniswap API, the Uniswap AMM (v2, v3, or v4), CCA, or any other Uniswap protocol. This also includes new v4 hooks, extensions or improvements to official Uniswap repositories, and tooling or solutions built for the broader ecosystem.
+
+Qualification Requirements
+A public GitHub repository with open-source code, a FEEDBACK.md file, and a completed submission to the Uniswap Developer Feedback Form (https://developers.uniswap.org/hackathon-feedback) that includes the link to your FEEDBACK.md file.
+
+Submissions without it will be reviewed and audited before winners are finalized. Make sure your README clearly points to the relevant contracts and lines of code so we can verify your integration.
+
+🦄 Best Uniswap Stack Contribution ⸺ $4,000
+🆕  This prize is only available to Continuity Track participants →
+🥇
+1st place
+$2,000
+🥈
+2nd place
+$1,000
+🥉
+3rd place
+$1,000
+Build on or integrate any part of the Uniswap stack, including the Uniswap API, the Uniswap AMM (v2, v3, or v4), CCA, or any other Uniswap protocol. This also includes new v4 hooks, extensions or improvements to official Uniswap repositories, and tooling or solutions built for the broader ecosystem.
+
+Qualification Requirements
+A public GitHub repository with open-source code, a FEEDBACK.md file, and a completed submission to the Uniswap Developer Feedback Form (https://developers.uniswap.org/hackathon-feedback) that includes the link to your FEEDBACK.md file.
+
+Submissions without it will be reviewed and audited before winners are finalized. Make sure your README clearly points to the relevant contracts and lines of code so we can verify your integration.
+
+Workshop
+Watch Video →
+How to Navigate the Uniswap Stack 🦄
+A hands-on intro to the full Uniswap ecosystem: the Uniswap API, v4 hooks, Uniswap AI, and open-source tooling. Cov...
+
+This workshop is happening in-person
+04:30 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+Sui logo
+Sui
+$5,000
+
+sui.io
+suinetwork
+Open page →
+About
+The Sui Stack is a modular ecosystem for trustless coordination, privacy, and scalable apps. Builders can combine storage, access control, compute, and coordination layers based on their specific use case.
+
+Prizes
+💰 DeFi & Payments ⸺ $5,000
+🥇
+1st place
+$2,500
+🥈
+2nd place
+$1,500
+🥉
+3rd place
+$1,000
+Build programmable payment systems and financial applications on Sui that move, manage, and transform money intelligently, creating more seamless, automated, and composable financial experiences beyond traditional DeFi.
+
+Qualification Requirements
+Systems that move, manage, and transform money programmatically.
+
+This includes:
+
+Payment flows
+Wallets and financial interfaces
+Vaults and capital allocators
+Automation systems
+Financial abstractions for real users
+Resources
+Sui Doc
+https://docs.sui.io/?_gl=1*b254ru*_ga*MTE5NzQ3NTEuMTc1MDIyNDAzNw..*_ga_RDW50T5ML7*czE3ODY1OTk2MDEkbzM3JGcwJHQxNzg2NTk5NjAyJGo2MCRsMCRoMA..*_gcl_au*MTIyNDE4ODI5Mi4xNzg1OTk3Mzk5
+↗
+Sui Tools
+https://github.com/sui-foundation/awesome-sui/tree/main
+↗
+Start Template
+https://github.com/MystenLabs/sui-stack-hello-world
+↗
+Workshop
+Watch Video →
+Get started on Sui through Agentic Engineerin...
+Pick up a thing or 2 to start building on Sui. Learn what is RPI and how can you start building on Sui accurately a...
+
+This workshop is happening in-person
+03:30 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+Curvegrid logo
+Curvegrid
+$3,000
+
+curvegrid.com
+curvegridinc
+Open page →
+About
+Curvegrid is a leading provider of blockchain application development tools and digital asset solutions.
+
+Curvegrid helps developers implement DApps faster, easier, and more efficiently so you can concentrate on what really matters to your application.
+
+Prizes
+🏦 Best RWA Tokenization Project ⸺ $1,000
+Turn real-world assets into programmable, composable digital primitives.
+
+Tokenized RWAs are rapidly becoming one of the most impactful Web3 use cases: from on-chain treasuries and money markets to supply-chain assets, invoices, or even real estate shares.
+
+This prize challenges builders to bring real-world asset value on-chain. Beyond simply tokenizing an asset, think about what becomes possible once ownership, transactions, permissions, and financial workflows are programmable.
+
+💡 Some Ideas to Explore: 🏦 On-chain Treasuries – Tokenize treasury bills, money-market instruments, or other financial assets with transparent yield and transaction reporting 📄 Invoice Financing – Build tokenized invoice marketplaces with automated settlement, cashflow tracking, or other mechanisms 🏠 Real Estate Shares – Explore fractional ownership, secondary trading, or compliance-aware transfer logic 📦 Supply Chain Assets – Track movement, custody, provenance, and settlement by representing commercial goods on-chain 🪙 Stablecoins – Create an interface for minting and managing stablecoins, including compliance aspects, yield tracking, or anything else you think useful in the stablecoin world 🔐 Programmable Asset Controls — Experiment with permissions, transaction limits, allowlists, approval workflows, or other controls around how tokenized assets can be held and transferred
+
+Using our blockchain development platform MultiBaas is not a requirement to apply for this prize.
+
+Qualification Requirements
+Judging is based on your idea and technical execution.
+
+✅ A GitHub repository with your project artifacts (contracts, tests, documentation) and a solid README.
+
+Your README should include: 1️⃣ A one-sentence summary of your project 2️⃣ How you used MultiBaas in your project (optional) 3️⃣ A brief intro to your team and their social handles 4️⃣ Clear setup and testing instructions 5️⃣ Your experience with MultiBaas if you used it (feedback, challenges, wins)
+
+Links and Resources
+Curvegrid Docs
+https://docs.curvegrid.com/
+↗
+📊 Best Digital Asset Dashboard ⸺ $1,000
+More and more people are managing portfolios of tokens, whether you’re an individual with personal investments, a VC with token agreements, or a business getting paid in tokens. Are there upcoming DAO votes? Actions to take for vesting tokens? How do you visualise your holdings in order to understand their value and take actions to manage them.
+
+Build a dashboard that helps users understand their digital assets, identify actions that need to be taken, and make better operational decisions. 💡 Some Ideas to Explore: 📊 RWA Analytics – How are RWAs performing including ownership distribution, valuations, and liquidity flows 🏦 Treasury Management – How do you track the assets in your portfolio and liquidate or exchange them efficiently in different markets 📈 DeFi Analytics – Real-time DEX activity, yield curves, liquidity movements 🌉 Cross-Chain Views – Compare assets or contracts across chains with unified views
+
+Using our blockchain development platform MultiBaas is not a requirement to apply for this prize.
+
+Qualification Requirements
+Judging is based on your idea and technical execution.
+
+✅ A GitHub repository with your project artifacts (contracts, tests, documentation) and a solid README.
+
+Your README should include: 1️⃣ A one-sentence summary of your project 2️⃣ How you used MultiBaas in your project (optional) 3️⃣ A brief intro to your team and their social handles 4️⃣ Clear setup and testing instructions 5️⃣ Your experience with MultiBaas if you used it (feedback, challenges, wins)
+
+🤖 Best AI Agent Project ⸺ $1,000
+What happens when AI agents can understand blockchain activity and take action on-chain?
+
+AI agents are emerging as a new interface for interacting with financial infrastructure. Combined with programmable digital assets, they could help users analyze portfolios, automate treasury operations, execute payments, monitor risks, interact with smart contracts, and coordinate increasingly complex workflows.
+
+💡 Some Ideas to Explore: 💰 AI Treasury Agent — Monitor digital assets and recommend actions based on balances, liquidity needs, or predefined policies. 🪙 Stablecoin Payment Agent — Manage invoices, initiate stablecoin payments, select payment routes, or track settlement. 🔎 On-Chain Monitoring Agent — Analyze wallets, contracts, or transactions and surface unusual activity or events requiring attention. 📊 Portfolio Intelligence Agent — Let users ask natural-language questions about holdings, transactions, yield, or historical activity. 🛡️ Policy-Aware Transaction Agent — Propose or execute transactions while respecting rules such as spending limits, approved counterparties, or required human approvals. 🤝 Agent-to-Agent Payments — Explore autonomous commerce where AI agents request, execute, or reconcile on-chain payments with one another.
+
+Using our blockchain development platform MultiBaas is not a requirement to apply for this prize.
+
+Qualification Requirements
+Judging is based on your idea and technical execution.
+
+✅ A GitHub repository with your project artifacts (contracts, tests, documentation) and a solid README.
+
+Your README should include: 1️⃣ A one-sentence summary of your project 2️⃣ How you used MultiBaas in your project (optional) 3️⃣ A brief intro to your team and their social handles 4️⃣ Clear setup and testing instructions 5️⃣ Your experience with MultiBaas if you used it (feedback, challenges, wins)
+
+Resources
+Curvegrid Website
+https://www.curvegrid.com
+↗
+Workshop
+Watch Video →
+Stablecoins, AI Agents, and the Future of On-...
+What happens when the user of your dapp is an AI agent? Using Curvegrid’s Matsuri Stablecoin Sample App, we’ll expl...
+
+This workshop is happening in-person
+04:00 PM JST — Friday, Sep 25, 2026 in 5F | Workshop Room
+
+Intercepta logo
+Intercepta
+$2,500
+
+intercepta.io
+intercepta_
+Open page →
+About
+Intercepta is a real-time security and compliance layer for onchain payments. One API call screens a wallet, contract, token, signature or transaction and returns a clear verdict with the reasons behind it: sanctions and AML exposure, scam and phishing attribution, drainer approvals, fake tokens, simulated balance changes.
+
+As agents start paying each other over x402, that check has to live inside the payment flow: before an agent signs a payment, and before a service accepts one. Trust Wallet, 1inch and P2P.org are among the teams that already use Intercepta.
+
+Every hacker gets a free sandbox key with 1,000 requests at intercepta.io/ethglobal. Keys arrive by email within a few hours. Need more? DM us at X or at come to our booth.
+
+Prizes
+🛡️ Safe Agent-to-Agent Payments with x402 ⸺ $2,000
+🥇
+1st place
+$1,250
+🥈
+2nd place
+$750
+Agents are starting to pay each other: for an API call, a dataset, compute or another agent's work, often over x402. Most of those payments get signed with no one checking who is on the other side. Build the check that makes agent-to-agent payments safe.
+
+Use the Intercepta API inside an agent payment flow, so every payment is screened before the agent signs it or the service accepts it. Show the verdict in the flow and let it decide what happens next: pay, refuse, cap the amount or ask a human.
+
+Where we'll lean in, and help most at the booth:
+
+The paying agent. Before it signs an x402 payment, screen the destination address (payTo), the token (real USDC or a lookalike) and the payment authorization itself. Enforce spending limits and stop what fails, inside the agent loop.
+The paid agent or service. An x402 endpoint or facilitator that screens the payer's wallet for sanctions, stolen funds and scam exposure before it accepts or settles.
+Counterparty risk for agents. A risk profile with reasons for every agent or wallet on the other side, so agents can decide who to pay, who to serve and how far to trust them.
+x402 is our focus, and other agent payment protocols count too. We judge the moment of decision, not the size of the project: how clearly the risk shows up, how naturally it fits the payment flow, and whether an agent's owner would trust it with real money.
+
+Qualification Requirements
+A working agent payment flow, x402 preferred. Payments can run on a testnet.
+At least one live call to the Intercepta API (free key at intercepta.io/ethglobal) runs before a payment is signed or accepted, and its result decides what happens next. Mocked or hard-coded responses don't qualify.
+Our risk data covers mainnet, so screen real mainnet addresses even when the payment runs on a testnet. Test addresses with known risks are pinned in our Discord channel.
+Your demo shows one payment that goes through and one that is blocked or held, with the reason visible.
+Public GitHub repo. The README points to the files where the API is called and includes 3 to 5 lines of feedback on the API: time to first call, what confused you, what was missing.
+Links and Resources
+Get a free API key
+https://intercepta.io/ethglobal
+↗
+x402 quickstart for buyers
+https://docs.x402.org/getting-started/quickstart-for-buyers
+↗
+x402 quickstart for sellers
+https://docs.x402.org/getting-started/quickstart-for-sellers
+↗
+Scan Message: check the payment authorization
+https://docs.web3antivirus.io/reference/scan-message
+↗
+Quick Scan Address: fast check on payTo or payer
+https://docs.web3antivirus.io/reference/quick-scan-address
+↗
+Deep Scan Address: sanctions, AML and scam exposure
+https://docs.web3antivirus.io/reference/scan-address
+↗
+Scan Token: real USDC or a lookalike
+https://docs.web3antivirus.io/reference/scan-token
+↗
+🧩 Add Payment Screening to Your Agent or x402 Service ⸺ $500
+🆕  This prize is only available to Continuity Track participants →
+Already run an agent, an agent framework, an x402-enabled API or a payment service? Ship one feature this weekend: an Intercepta check at the moment money moves between agents.
+
+Add screening to the product you maintain. Check the destination address and the payment authorization before your agent pays, or check the payer before your x402 endpoint accepts funds. Show the result in the real flow and ship the new code as open source.
+
+We judge how naturally the check fits the existing product and whether its users would trust it with real money. A product with real users is a plus.
+
+Qualification Requirements
+The feature is added to an existing product or repo on the Continuity track, and the new code is open source.
+At least one live Intercepta API call runs before a payment is signed, sent or accepted, and its result is visible in the product's real flow.
+Your demo shows the flow before and after the check, including one blocked or held payment.
+The README points to the files where the API is called and includes 3 to 5 lines of feedback on the API.
+Links and Resources
+Get a free API key
+https://intercepta.io/ethglobal
+↗
+x402 docs
+https://docs.x402.org/
+↗
+A2A x402 extension
+https://github.com/google-agentic-commerce/a2a-x402
+↗
+Quick Scan Address: fast check on payTo or payer
+https://docs.web3antivirus.io/reference/quick-scan-address
+↗
+Scan Message: check the payment authorization
+https://docs.web3antivirus.io/reference/scan-message
+↗
+Resources
+Get a free API key
+https://intercepta.io/ethglobal
+↗
+Intercepta API reference
+https://docs.web3antivirus.io/reference/api-overview
+↗
+x402 docs
+https://docs.x402.org/
+↗
+A2A x402 extension
+https://github.com/google-agentic-commerce/a2a-x402
+↗
+Intercepta on X
+https://x.com/intercepta_
+↗
+Jobs
+
+Cyber Data Analyst
+Intercepta
+→
+Sign up to get the latest news and updates on ETHGlobal
+Your email address
+
+Products
+ETHConf
+Events
+Pragma
+Packs
+Plus New
+Faucet
+Legal
+Rules & Conduct
+Privacy Policy
+Company
+About
+Brand
+Careers Hiring
+© 2026 ETHGlobal. All rights reserved.
+
+ETHGlobal
