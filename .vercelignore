@@ -1,0 +1,11 @@
+.git
+.venv
+.env
+.env.*
+.vercel
+__pycache__
+**/__pycache__
+tests
+docs
+README.md
+idea.md

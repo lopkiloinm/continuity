@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "regions": [
+    "hnd1"
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "includeFiles": "{continuity/**,static/**}",
+      "excludeFiles": "{.venv/**,.git/**,.env*,tests/**,docs/**}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
+}

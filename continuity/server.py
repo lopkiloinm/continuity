@@ -2,6 +2,8 @@
 import csv
 import io
 import json
+import os
+import re
 import secrets
 import time
 from http.cookies import SimpleCookie
@@ -11,6 +13,7 @@ from urllib.parse import urlparse
 
 from continuity.engine import Job, Rejected, digest
 from continuity.world import Config, WorldClient, WorldFlow, WorldError, load_env
+from continuity.storage import RedisStore, StorageError, SessionBusy, RateLimited
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIC = ROOT / 'static'
@@ -40,8 +43,49 @@ class Session:
             return digest(self.job.approval)
         return self.job.id if self.job.state == 'ready' else None
 
+    def serialize(self):
+        return {'version': 1, 'job': {k: v for k, v in vars(self.job).items() if k != 'clock'},
+                'owner': self.owner, 'touched': self.touched, 'world': {
+                    'attempt': self.world.attempt, 'evidence': self.world.evidence, 'error': self.world.error}}
+
+    @classmethod
+    def restore(cls, data):
+        if data.get('version') != 1:
+            raise StorageError('Unsupported saved session version.')
+        session = cls()
+        session.job.__dict__.update(data['job'])
+        session.owner = tuple(data['owner']) if data['owner'] else None
+        for key in ('attempt', 'evidence', 'error'):
+            setattr(session.world, key, data['world'][key])
+        if session.world.attempt and session.world.attempt['owner']:
+            session.world.attempt['owner'] = tuple(session.world.attempt['owner'])
+        session.touched = time.time()
+        return session
+
 
 class Handler(BaseHTTPRequestHandler):
+    @property
+    def deployed(self):
+        return os.getenv('VERCEL') == '1'
+
+    def dispatch(self, method):
+        self.new_cookie = None
+        self.loaded_session = None
+        self.store = None
+        self.lease = None
+        try:
+            method()
+        except StorageError as error:
+            self.send(429 if isinstance(error, RateLimited) else 409 if isinstance(error, SessionBusy) else 503,
+                      {'error': str(error)})
+        finally:
+            if self.lease:
+                try:
+                    self.store.release(self.sid, self.lease)
+                except StorageError:
+                    pass  # Lease expires; no unfenced commit is possible.
+                self.lease = None
+
     def log_message(self, format, *args):
         # Avoid logging OAuth codes or callback query strings if routes change later.
         pass
@@ -57,6 +101,17 @@ class Handler(BaseHTTPRequestHandler):
             sid = cookie['continuity_session'].value if 'continuity_session' in cookie else None
         except Exception:
             sid = None
+        if self.deployed:
+            self.store = RedisStore.from_env()
+            if not sid or not re.fullmatch(r'[A-Za-z0-9_-]{43}', sid):
+                sid = secrets.token_urlsafe(32)
+                self.new_cookie = sid
+            self.sid = sid
+            self.lease, data = self.store.acquire(sid)
+            self.loaded_session = Session.restore(data) if data else Session()
+            # Refresh the browser cookie alongside the Redis TTL.
+            self.new_cookie = sid
+            return self.loaded_session
         if sid not in sessions:
             sid = secrets.token_urlsafe(32)
             sessions[sid] = Session()
@@ -65,6 +120,9 @@ class Handler(BaseHTTPRequestHandler):
         return sessions[sid]
 
     def send(self, status, data, content_type='application/json'):
+        if getattr(self, 'lease', None):
+            lease, self.lease = self.lease, None
+            self.store.commit(self.sid, lease, self.loaded_session.serialize())
         body = json.dumps(data).encode() if content_type == 'application/json' else data
         self.send_response(status)
         self.send_header('Content-Type', content_type)
@@ -74,22 +132,52 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
         if getattr(self, 'new_cookie', None):
-            self.send_header('Set-Cookie', 'continuity_session=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600' % self.new_cookie)
+            self.send_header('Set-Cookie', 'continuity_session=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600%s' % (self.new_cookie, '; Secure' if self.deployed else ''))
         self.end_headers()
         self.wfile.write(body)
 
     def valid_origin(self):
+        if self.deployed:
+            host = self.headers.get('Host', '')
+            allowed = {os.getenv('APP_ORIGIN', '').removeprefix('https://'),
+                       os.getenv('VERCEL_URL', ''), os.getenv('VERCEL_PROJECT_PRODUCTION_URL', '')}
+            return bool(host and host in allowed and self.headers.get('Origin', 'https://' + host) == 'https://' + host)
         expected = '127.0.0.1:%d' % self.server.server_port
         return self.headers.get('Host') == expected and self.headers.get('Origin', 'http://' + expected) == 'http://' + expected
 
     def do_GET(self):
+        self.dispatch(self.get)
+
+    def get(self):
         if not self.valid_origin():
-            return self.send(403, {'error': 'Use the local demo origin http://127.0.0.1:%d.' % self.server.server_port})
+            return self.send(403, {'error': 'Use the configured application origin.'})
+        path = urlparse(self.path).path
+        if path == '/api/health':
+            storage = 'memory'
+            if self.deployed:
+                store = RedisStore.from_env()
+                if store.command('PING') != 'PONG':
+                    raise StorageError('Shared session storage is unavailable.')
+                storage = 'redis'
+            return self.send(200, {'status': 'ok', 'runtime': 'python', 'storage': storage,
+                                   'world_configured': world_client.config.configured})
+        if path == '/auth/world/callback':
+            return self.send(200, b'<!doctype html><html lang="en"><title>Continuity World ID</title><h1>Continuity</h1><p>This app uses World ID device verification. Return to the app to connect your identity.</p><a href="/">Open Continuity</a></html>', 'text/html; charset=utf-8')
+        files = {'/': ('index.html', 'text/html; charset=utf-8'),
+                 '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
+                 '/style.css': ('style.css', 'text/css; charset=utf-8')}
+        if path in files:
+            name, mime = files[path]
+            return self.send(200, (STATIC / name).read_bytes(), mime)
+        if path not in ('/api/job', '/api/receipt', '/api/result.csv'):
+            return self.send(404, {'error': 'Not found'})
         session = self.get_session()
         job = session.job
-        path = urlparse(self.path).path
         if path in ('/api/job', '/api/receipt'):
             data = session.snapshot() if path == '/api/job' else job.snapshot()
+            if self.deployed:
+                data['limitations'] = [x for x in data['limitations'] if not x.startswith('In-memory')]
+                data['storage'] = 'Encrypted Redis session, one-hour idle expiry'
             return self.send(200, data)
         if path == '/api/result.csv':
             if job.state != 'completed':
@@ -99,17 +187,14 @@ class Handler(BaseHTTPRequestHandler):
             writer.writeheader()
             writer.writerows(job.rows)
             return self.send(200, buffer.getvalue().encode(), 'text/csv; charset=utf-8')
-        files = {'/': ('index.html', 'text/html; charset=utf-8'),
-                 '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
-                 '/style.css': ('style.css', 'text/css; charset=utf-8')}
-        if path in files:
-            name, mime = files[path]
-            return self.send(200, (STATIC / name).read_bytes(), mime)
         self.send(404, {'error': 'Not found'})
 
     def do_POST(self):
+        self.dispatch(self.post)
+
+    def post(self):
         if not self.valid_origin():
-            return self.send(403, {'error': 'Use the local demo origin.'})
+            return self.send(403, {'error': 'Use the configured application origin.'})
         if self.headers.get('Content-Type') != 'application/json':
             return self.send(415, {'error': 'JSON required'})
         session = self.get_session()
@@ -127,6 +212,9 @@ class Handler(BaseHTTPRequestHandler):
                 session.owner = None
                 session.world = WorldFlow(world_client)
             elif self.path == '/api/world/start':
+                if self.deployed:
+                    ip = self.headers.get('x-vercel-forwarded-for', self.client_address[0])
+                    self.store.limit('world:' + ip)
                 purpose = data.get('purpose')
                 if purpose == 'owner':
                     job.require('ready')
